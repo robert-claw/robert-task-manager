@@ -154,3 +154,124 @@ export interface LegacyTask {
     [key: string]: unknown
   }
 }
+
+// Campaign types
+export type CampaignStatus = 'planned' | 'active' | 'paused' | 'completed'
+
+export interface CampaignGoal {
+  id: string
+  metric: string
+  target: number
+  current: number
+  unit: string
+}
+
+export interface Campaign {
+  id: string
+  projectId: string
+  name: string
+  description: string
+  status: CampaignStatus
+  color: string
+  startDate: string
+  endDate: string | null
+  goals: CampaignGoal[]
+  contentIds: string[]
+  tags: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+// Content Template types
+export interface TemplateVariable {
+  name: string
+  description: string
+}
+
+export interface ContentTemplate {
+  id: string
+  projectId: string
+  name: string
+  description: string
+  platform: Platform
+  type: ContentType
+  structure: string
+  variables: TemplateVariable[]
+  hashtags: string[]
+  bestPractices: string[]
+  usageCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+// Hashtag Group types
+export interface HashtagGroup {
+  id: string
+  projectId: string
+  name: string
+  description: string
+  platform: Platform
+  hashtags: string[]
+  usageCount: number
+  createdAt: string
+}
+
+// Ideas Board types
+export type IdeaStatus = 'backlog' | 'in_progress' | 'converted' | 'archived'
+export type IdeaSource = 'internal' | 'competitor_analysis' | 'industry_trend' | 'user_feedback' | 'other'
+
+export interface Idea {
+  id: string
+  projectId: string
+  title: string
+  description: string
+  source: IdeaSource
+  sourceUrl: string | null
+  status: IdeaStatus
+  priority: Priority
+  platforms: Platform[]
+  tags: string[]
+  notes: string | null
+  linkedContentId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+// Analytics types
+export interface CadenceMetric {
+  target: number
+  actual: number
+  period: 'day' | 'week' | 'month'
+}
+
+export interface WeeklyStats {
+  week: string
+  drafted: number
+  published: number
+  engagement: number
+}
+
+export interface ProjectMetrics {
+  postingCadence: Record<Platform, CadenceMetric>
+  contentMix: Record<string, number>
+  statusBreakdown: Record<ContentStatus, number>
+  platformBreakdown: Record<Platform, number>
+  weeklyStats: WeeklyStats[]
+  topPerformingContent: string[]
+  contentVelocity: {
+    avgDaysToPublish: number
+    avgDaysInReview: number
+  }
+}
+
+export interface Analytics {
+  lastUpdated: string
+  projectMetrics: Record<string, ProjectMetrics>
+  globalMetrics: {
+    totalContent: number
+    totalPublished: number
+    totalDrafts: number
+    avgContentPerWeek: number
+    contentByType: Record<ContentType, number>
+  }
+}
