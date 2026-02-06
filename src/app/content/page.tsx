@@ -4,14 +4,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
-import { LoadingPage, LoadingList } from '@/components/ui/Loading'
+import { LoadingPage } from '@/components/ui/Loading'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { NewContentModal, ContentFormData } from '@/components/features/content/NewContentModal'
+import { ContentDetailModal } from '@/components/features/content/ContentDetailModal'
+import { ContentActions } from '@/components/features/content/ContentActions'
 import {
   PlatformIcon,
-  StatusIcon,
   Plus,
-  X,
-  Check,
   Edit3,
   Calendar,
   Clock,
@@ -24,6 +24,7 @@ import {
   Eye,
   FileText,
   ChevronRight,
+  Check,
 } from '@/components/ui/Icons'
 
 interface Project {
@@ -82,33 +83,30 @@ function ContentPageContent() {
   const [platformFilter, setPlatformFilter] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean
-    action: 'approve' | 'reject' | 'publish' | null
-    contentId: string | null
-    contentTitle: string
-  }>({ isOpen: false, action: null, contentId: null, contentTitle: '' })
-  
+  const [showNewContentModal, setShowNewContentModal] = useState(false)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
+
   const toast = useToast()
-  
+
   const fetchData = useCallback(async () => {
     try {
       const [projectsRes] = await Promise.all([
         fetch('/api/projects'),
       ])
-      
+
       let contentUrl = '/api/content?'
       if (selectedProject) contentUrl += `projectId=${selectedProject}&`
       if (statusFilter) contentUrl += `status=${statusFilter}&`
       if (platformFilter) contentUrl += `platform=${platformFilter}&`
-      
+
       const [projectsData, contentRes] = await Promise.all([
         projectsRes.json(),
         fetch(contentUrl).then(r => r.json()),
       ])
-      
+
       setProjects(projectsData.projects || [])
       setContent(contentRes.content || [])
     } catch (error) {
@@ -118,50 +116,210 @@ function ContentPageContent() {
       setLoading(false)
     }
   }, [selectedProject, statusFilter, platformFilter, toast])
-  
+
   useEffect(() => {
     fetchData()
   }, [fetchData])
-  
-  async function updateStatus(contentId: string, newStatus: string, showToast = true) {
-    setActionLoading(contentId)
+
+  // Create new content
+  const handleCreateContent = async (formData: ContentFormData) => {
+    try {
+      const res = await fetch('/api/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: formData.projectId,
+          platform: formData.platform,
+          type: formData.type,
+          title: formData.title,
+          content: formData.content,
+          priority: formData.priority,
+          scheduledFor: formData.scheduledFor || undefined,
+          status: formData.submitForReview ? 'ready_for_review' : 'draft',
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to create content')
+
+      toast.success('Content Created', formData.submitForReview ? 'Submitted for review' : 'Saved as draft')
+      await fetchData()
+    } catch (error) {
+      console.error('Failed to create content:', error)
+      toast.error('Failed to create content')
+      throw error
+    }
+  }
+
+  // Update content status
+  const handleStatusChange = async (contentId: string, newStatus: string) => {
     try {
       const res = await fetch(`/api/content/${contentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       })
-      
+
       if (!res.ok) throw new Error('Failed to update')
-      
+
+      const statusLabel = statusConfig[newStatus]?.label || newStatus
+      toast.success('Status Updated', `Content moved to "${statusLabel}"`)
       await fetchData()
       
-      if (showToast) {
-        const statusLabel = statusConfig[newStatus]?.label || newStatus
-        toast.success('Status Updated', `Content moved to "${statusLabel}"`)
+      // Update selected content if it's the one being modified
+      if (selectedContent?.id === contentId) {
+        setSelectedContent(prev => prev ? { ...prev, status: newStatus } : null)
       }
     } catch (error) {
       console.error('Failed to update status:', error)
       toast.error('Update Failed', 'Could not update content status')
-    } finally {
-      setActionLoading(null)
+      throw error
     }
   }
-  
-  function handleConfirmAction() {
-    if (!confirmModal.contentId || !confirmModal.action) return
-    
-    const statusMap = {
-      approve: 'approved',
-      reject: 'changes_requested',
-      publish: 'published',
+
+  // Update content
+  const handleUpdateContent = async (contentId: string, updates: Partial<ContentItem>) => {
+    try {
+      const res = await fetch(`/api/content/${contentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      })
+
+      if (!res.ok) throw new Error('Failed to update')
+
+      toast.success('Content Updated')
+      await fetchData()
+      
+      // Update selected content
+      if (selectedContent?.id === contentId) {
+        setSelectedContent(prev => prev ? { ...prev, ...updates } : null)
+      }
+    } catch (error) {
+      console.error('Failed to update content:', error)
+      toast.error('Update Failed')
+      throw error
     }
-    
-    updateStatus(confirmModal.contentId, statusMap[confirmModal.action])
-    setConfirmModal({ isOpen: false, action: null, contentId: null, contentTitle: '' })
-    setSelectedContent(null)
   }
-  
+
+  // Delete content
+  const handleDeleteContent = async (contentId: string) => {
+    try {
+      const res = await fetch(`/api/content/${contentId}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) throw new Error('Failed to delete')
+
+      toast.success('Content Deleted')
+      await fetchData()
+    } catch (error) {
+      console.error('Failed to delete content:', error)
+      toast.error('Delete Failed')
+      throw error
+    }
+  }
+
+  // Bulk actions
+  const handleAutoDistribute = async (cadenceDays: number) => {
+    const unscheduled = content.filter(c => !c.scheduledFor && c.status !== 'published')
+    if (unscheduled.length === 0) {
+      toast.info('No Content to Schedule', 'All content is already scheduled')
+      return
+    }
+
+    // Distribute starting from tomorrow
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() + 1)
+    startDate.setHours(10, 0, 0, 0)
+
+    let currentDate = new Date(startDate)
+
+    for (const item of unscheduled) {
+      try {
+        await fetch(`/api/content/${item.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scheduledFor: currentDate.toISOString(),
+            status: item.status === 'approved' ? 'scheduled' : item.status,
+          }),
+        })
+      } catch (error) {
+        console.error(`Failed to schedule ${item.id}:`, error)
+      }
+
+      currentDate.setDate(currentDate.getDate() + cadenceDays)
+    }
+
+    toast.success('Content Distributed', `${unscheduled.length} items scheduled`)
+    await fetchData()
+  }
+
+  const handleScheduleApproved = async () => {
+    const approved = content.filter(c => c.status === 'approved' && !c.scheduledFor)
+    if (approved.length === 0) {
+      toast.info('No Approved Content', 'No approved content without schedule')
+      return
+    }
+
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() + 1)
+    startDate.setHours(10, 0, 0, 0)
+
+    let currentDate = new Date(startDate)
+
+    for (const item of approved) {
+      try {
+        await fetch(`/api/content/${item.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scheduledFor: currentDate.toISOString(),
+            status: 'scheduled',
+          }),
+        })
+      } catch (error) {
+        console.error(`Failed to schedule ${item.id}:`, error)
+      }
+
+      currentDate.setDate(currentDate.getDate() + 2)
+    }
+
+    toast.success('Content Scheduled', `${approved.length} items scheduled`)
+    await fetchData()
+  }
+
+  const handleBulkApprove = async (ids: string[]) => {
+    let successCount = 0
+
+    for (const id of ids) {
+      try {
+        await fetch(`/api/content/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'approved' }),
+        })
+        successCount++
+      } catch (error) {
+        console.error(`Failed to approve ${id}:`, error)
+      }
+    }
+
+    toast.success('Content Approved', `${successCount} items approved`)
+    await fetchData()
+  }
+
+  const handlePreviewSchedule = () => {
+    setShowPreviewModal(true)
+  }
+
+  // Toggle item selection
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
   // Filter content by search
   const filteredContent = content.filter(item => {
     if (!searchQuery) return true
@@ -171,19 +329,19 @@ function ContentPageContent() {
       item.content.toLowerCase().includes(query)
     )
   })
-  
+
   if (loading) {
     return <LoadingPage message="Loading content..." />
   }
-  
+
   return (
     <div className="min-h-screen bg-slate-950 flex">
-      <Sidebar 
+      <Sidebar
         projects={projects}
         selectedProject={selectedProject}
         onProjectChange={setSelectedProject}
       />
-      
+
       <main className="flex-1 p-6 overflow-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -201,13 +359,29 @@ function ContentPageContent() {
                 {selectedProject && ` in ${projects.find(p => p.id === selectedProject)?.name}`}
               </p>
             </div>
-            
-            <button className="px-4 py-2 bg-cyan-500 text-black font-medium rounded-lg hover:bg-cyan-400 transition-colors flex items-center gap-2">
+
+            <button
+              onClick={() => setShowNewContentModal(true)}
+              className="px-4 py-2 bg-cyan-500 text-black font-medium rounded-lg hover:bg-cyan-400 transition-colors flex items-center gap-2"
+            >
               <Plus size={18} />
               New Content
             </button>
           </div>
-          
+
+          {/* Quick Actions Panel */}
+          <div className="mb-6">
+            <ContentActions
+              content={content}
+              onAutoDistribute={handleAutoDistribute}
+              onScheduleApproved={handleScheduleApproved}
+              onBulkApprove={handleBulkApprove}
+              onPreviewSchedule={handlePreviewSchedule}
+              selectedIds={selectedIds}
+              onSelectedIdsChange={setSelectedIds}
+            />
+          </div>
+
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-6">
             <div className="relative">
@@ -220,7 +394,7 @@ function ContentPageContent() {
                 className="bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-white w-64 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
             </div>
-            
+
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -230,7 +404,7 @@ function ContentPageContent() {
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
-            
+
             <select
               value={platformFilter}
               onChange={(e) => setPlatformFilter(e.target.value)}
@@ -240,8 +414,17 @@ function ContentPageContent() {
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
+
+            {selectedIds.length > 0 && (
+              <button
+                onClick={() => setSelectedIds([])}
+                className="px-3 py-2 bg-slate-800 text-slate-400 rounded-lg hover:bg-slate-700 transition-colors text-sm"
+              >
+                Clear selection ({selectedIds.length})
+              </button>
+            )}
           </div>
-          
+
           {/* Content List */}
           <div className="space-y-4">
             {filteredContent.length === 0 ? (
@@ -250,118 +433,127 @@ function ContentPageContent() {
                   <FileText size={32} className="text-slate-500" />
                 </div>
                 <p className="text-slate-400 text-lg mb-2">No content found</p>
-                <p className="text-slate-500 text-sm">Try adjusting your filters or create new content</p>
+                <p className="text-slate-500 text-sm mb-4">Try adjusting your filters or create new content</p>
+                <button
+                  onClick={() => setShowNewContentModal(true)}
+                  className="px-4 py-2 bg-cyan-500 text-black font-medium rounded-lg hover:bg-cyan-400 transition-colors inline-flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  Create Content
+                </button>
               </div>
             ) : (
               filteredContent.map(item => {
                 const config = statusConfig[item.status] || statusConfig.draft
                 const StatusIconComponent = config.icon
-                const isLoading = actionLoading === item.id
-                
+                const isSelected = selectedIds.includes(item.id)
+
                 return (
                   <motion.div
                     key={item.id}
                     layout
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    whileHover={{ x: 4 }}
-                    onClick={() => setSelectedContent(item)}
-                    className={`bg-slate-800/50 border border-slate-700 rounded-xl p-4 cursor-pointer hover:border-cyan-500/30 transition-all ${
-                      isLoading ? 'opacity-50 pointer-events-none' : ''
+                    className={`bg-slate-800/50 border rounded-xl p-4 cursor-pointer transition-all ${
+                      isSelected ? 'border-cyan-500 ring-2 ring-cyan-500/20' : 'border-slate-700 hover:border-cyan-500/30'
                     }`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-slate-700 flex items-center justify-center shrink-0">
-                        <PlatformIcon platform={item.platform} size={24} className="text-slate-300" />
+                      {/* Selection Checkbox */}
+                      <div className="shrink-0 pt-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleSelection(item.id)
+                          }}
+                          className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                            isSelected
+                              ? 'bg-cyan-500 border-cyan-500'
+                              : 'border-slate-600 hover:border-slate-500'
+                          }`}
+                        >
+                          {isSelected && <Check size={12} className="text-black" />}
+                        </button>
                       </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-white font-medium truncate">{item.title}</h3>
-                          <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${config.bg} ${config.text} border ${config.border}`}>
-                            <StatusIconComponent size={12} />
-                            {config.label}
-                          </span>
+
+                      <div
+                        className="flex-1 min-w-0 flex items-start gap-4"
+                        onClick={() => setSelectedContent(item)}
+                      >
+                        <div className="w-12 h-12 rounded-lg bg-slate-700 flex items-center justify-center shrink-0">
+                          <PlatformIcon platform={item.platform} size={24} className="text-slate-300" />
                         </div>
-                        
-                        <p className="text-slate-400 text-sm line-clamp-2 mb-2">
-                          {item.content}
-                        </p>
-                        
-                        <div className="flex items-center gap-4 text-xs text-slate-500">
-                          <span className="flex items-center gap-1">
-                            {projects.find(p => p.id === item.projectId)?.icon}
-                            {projects.find(p => p.id === item.projectId)?.name}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <User size={12} />
-                            {item.createdBy}
-                          </span>
-                          {item.scheduledFor && (
-                            <span className="text-cyan-400 flex items-center gap-1">
-                              <Calendar size={12} />
-                              {new Date(item.scheduledFor).toLocaleDateString()}
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-white font-medium truncate">{item.title}</h3>
+                            <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${config.bg} ${config.text} border ${config.border}`}>
+                              <StatusIconComponent size={12} />
+                              {config.label}
                             </span>
-                          )}
+                          </div>
+
+                          <p className="text-slate-400 text-sm line-clamp-2 mb-2">
+                            {item.content}
+                          </p>
+
+                          <div className="flex items-center gap-4 text-xs text-slate-500">
+                            <span className="flex items-center gap-1">
+                              {projects.find(p => p.id === item.projectId)?.icon}
+                              {projects.find(p => p.id === item.projectId)?.name}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <User size={12} />
+                              {item.createdBy}
+                            </span>
+                            {item.scheduledFor && (
+                              <span className="text-cyan-400 flex items-center gap-1">
+                                <Calendar size={12} />
+                                {new Date(item.scheduledFor).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 shrink-0">
-                        {item.status === 'ready_for_review' && (
-                          <>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {item.status === 'ready_for_review' && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleStatusChange(item.id, 'approved')
+                                }}
+                                className="px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 text-sm flex items-center gap-1 transition-colors"
+                              >
+                                <Check size={14} />
+                                Approve
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleStatusChange(item.id, 'changes_requested')
+                                }}
+                                className="px-3 py-1.5 bg-orange-500/20 text-orange-400 rounded-lg hover:bg-orange-500/30 text-sm flex items-center gap-1 transition-colors"
+                              >
+                                <Edit3 size={14} />
+                                Changes
+                              </button>
+                            </>
+                          )}
+                          {item.status === 'approved' && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setConfirmModal({
-                                  isOpen: true,
-                                  action: 'approve',
-                                  contentId: item.id,
-                                  contentTitle: item.title,
-                                })
+                                handleStatusChange(item.id, 'published')
                               }}
-                              disabled={isLoading}
-                              className="px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 text-sm flex items-center gap-1 transition-colors"
+                              className="px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 text-sm flex items-center gap-1 transition-colors"
                             >
-                              <Check size={14} />
-                              Approve
+                              <Rocket size={14} />
+                              Publish
                             </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setConfirmModal({
-                                  isOpen: true,
-                                  action: 'reject',
-                                  contentId: item.id,
-                                  contentTitle: item.title,
-                                })
-                              }}
-                              disabled={isLoading}
-                              className="px-3 py-1.5 bg-orange-500/20 text-orange-400 rounded-lg hover:bg-orange-500/30 text-sm flex items-center gap-1 transition-colors"
-                            >
-                              <Edit3 size={14} />
-                              Request Changes
-                            </button>
-                          </>
-                        )}
-                        {item.status === 'approved' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setConfirmModal({
-                                isOpen: true,
-                                action: 'publish',
-                                contentId: item.id,
-                                contentTitle: item.title,
-                              })
-                            }}
-                            disabled={isLoading}
-                            className="px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 text-sm flex items-center gap-1 transition-colors"
-                          >
-                            <Rocket size={14} />
-                            Publish
-                          </button>
-                        )}
-                        <ChevronRight size={18} className="text-slate-600" />
+                          )}
+                          <ChevronRight size={18} className="text-slate-600" />
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -371,163 +563,96 @@ function ContentPageContent() {
           </div>
         </motion.div>
       </main>
-      
+
+      {/* New Content Modal */}
+      <NewContentModal
+        isOpen={showNewContentModal}
+        onClose={() => setShowNewContentModal(false)}
+        onSubmit={handleCreateContent}
+        projects={projects}
+      />
+
       {/* Content Detail Modal */}
+      <ContentDetailModal
+        isOpen={!!selectedContent}
+        onClose={() => setSelectedContent(null)}
+        content={selectedContent}
+        projects={projects}
+        onStatusChange={handleStatusChange}
+        onUpdate={handleUpdateContent}
+        onDelete={handleDeleteContent}
+      />
+
+      {/* Preview Schedule Modal */}
       <AnimatePresence>
-        {selectedContent && (
+        {showPreviewModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
-            onClick={() => setSelectedContent(null)}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowPreviewModal(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-slate-900 border border-slate-700 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              className="bg-slate-900 border border-slate-700 rounded-xl max-w-4xl w-full max-h-[80vh] overflow-hidden"
             >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center">
-                      <PlatformIcon platform={selectedContent.platform} size={24} className="text-slate-300" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-white">{selectedContent.title}</h2>
-                      <div className="flex items-center gap-2 mt-1">
-                        {(() => {
-                          const config = statusConfig[selectedContent.status] || statusConfig.draft
-                          const StatusIconComponent = config.icon
-                          return (
-                            <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${config.bg} ${config.text} border ${config.border}`}>
-                              <StatusIconComponent size={12} />
-                              {config.label}
-                            </span>
-                          )
-                        })()}
-                        <span className="text-slate-500 text-sm">
-                          {projects.find(p => p.id === selectedContent.projectId)?.name}
-                        </span>
-                      </div>
-                    </div>
+              <div className="p-6 border-b border-slate-700">
+                <h2 className="text-xl font-semibold text-white">Schedule Preview</h2>
+                <p className="text-slate-400 text-sm mt-1">What your publishing schedule would look like</p>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                {content.filter(c => c.scheduledFor).length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar size={48} className="text-slate-600 mx-auto mb-4" />
+                    <p className="text-slate-400">No scheduled content yet</p>
+                    <p className="text-slate-500 text-sm mt-1">Use "Auto-Distribute" to schedule content</p>
                   </div>
-                  <button
-                    onClick={() => setSelectedContent(null)}
-                    className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-                
-                <div className="bg-slate-800 rounded-lg p-4 mb-4">
-                  <pre className="text-slate-300 whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                    {selectedContent.content}
-                  </pre>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm text-slate-500 mb-6">
-                  <div className="flex items-center gap-1">
-                    <User size={14} />
-                    Created by {selectedContent.createdBy} • {new Date(selectedContent.createdAt).toLocaleString()}
+                ) : (
+                  <div className="space-y-4">
+                    {content
+                      .filter(c => c.scheduledFor)
+                      .sort((a, b) => new Date(a.scheduledFor!).getTime() - new Date(b.scheduledFor!).getTime())
+                      .map(item => {
+                        const config = statusConfig[item.status] || statusConfig.draft
+                        return (
+                          <div key={item.id} className="flex items-center gap-4 p-3 bg-slate-800 rounded-lg">
+                            <div className="text-center w-20">
+                              <div className="text-cyan-400 font-bold">
+                                {new Date(item.scheduledFor!).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                              </div>
+                              <div className="text-slate-500 text-xs">
+                                {new Date(item.scheduledFor!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+                            <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
+                              <PlatformIcon platform={item.platform} size={16} className="text-slate-300" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-white font-medium truncate">{item.title}</div>
+                              <div className={`text-xs ${config.text}`}>{config.label}</div>
+                            </div>
+                          </div>
+                        )
+                      })}
                   </div>
-                  {selectedContent.scheduledFor && (
-                    <div className="text-cyan-400 flex items-center gap-1">
-                      <Calendar size={14} />
-                      Scheduled: {new Date(selectedContent.scheduledFor).toLocaleString()}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex gap-3">
-                  {selectedContent.status === 'ready_for_review' && (
-                    <>
-                      <button
-                        onClick={() => {
-                          setConfirmModal({
-                            isOpen: true,
-                            action: 'approve',
-                            contentId: selectedContent.id,
-                            contentTitle: selectedContent.title,
-                          })
-                        }}
-                        className="flex-1 px-4 py-2.5 bg-green-500 text-black font-medium rounded-lg hover:bg-green-400 flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <Check size={18} />
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => {
-                          setConfirmModal({
-                            isOpen: true,
-                            action: 'reject',
-                            contentId: selectedContent.id,
-                            contentTitle: selectedContent.title,
-                          })
-                        }}
-                        className="flex-1 px-4 py-2.5 bg-orange-500 text-black font-medium rounded-lg hover:bg-orange-400 flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <Edit3 size={18} />
-                        Request Changes
-                      </button>
-                    </>
-                  )}
-                  {selectedContent.status === 'approved' && (
-                    <button
-                      onClick={() => {
-                        setConfirmModal({
-                          isOpen: true,
-                          action: 'publish',
-                          contentId: selectedContent.id,
-                          contentTitle: selectedContent.title,
-                        })
-                      }}
-                      className="flex-1 px-4 py-2.5 bg-purple-500 text-black font-medium rounded-lg hover:bg-purple-400 flex items-center justify-center gap-2 transition-colors"
-                    >
-                      <Rocket size={18} />
-                      Publish Now
-                    </button>
-                  )}
-                </div>
+                )}
+              </div>
+              <div className="p-6 border-t border-slate-700">
+                <button
+                  onClick={() => setShowPreviewModal(false)}
+                  className="w-full px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                >
+                  Close
+                </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      
-      {/* Confirmation Modal */}
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal({ isOpen: false, action: null, contentId: null, contentTitle: '' })}
-        onConfirm={handleConfirmAction}
-        title={
-          confirmModal.action === 'approve' ? 'Approve Content' :
-          confirmModal.action === 'reject' ? 'Request Changes' :
-          confirmModal.action === 'publish' ? 'Publish Content' : ''
-        }
-        message={
-          <div>
-            <p className="mb-2">
-              {confirmModal.action === 'approve' && 'Are you sure you want to approve this content?'}
-              {confirmModal.action === 'reject' && 'Are you sure you want to request changes for this content?'}
-              {confirmModal.action === 'publish' && 'Are you sure you want to publish this content now?'}
-            </p>
-            <p className="text-slate-500 text-sm">"{confirmModal.contentTitle}"</p>
-          </div>
-        }
-        confirmLabel={
-          confirmModal.action === 'approve' ? 'Approve' :
-          confirmModal.action === 'reject' ? 'Request Changes' :
-          'Publish'
-        }
-        variant={
-          confirmModal.action === 'approve' ? 'info' :
-          confirmModal.action === 'reject' ? 'warning' :
-          'info'
-        }
-      />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback, ReactNode } from 'react'
+import { useEffect, useCallback, ReactNode, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 
@@ -99,5 +99,3 @@ export function useModal(initialState = false) {
   
   return { isOpen, open, close, toggle }
 }
-
-import { useState } from 'react'

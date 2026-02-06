@@ -3,6 +3,7 @@
 import {
   LayoutDashboard,
   Calendar,
+  CalendarDays,
   FileText,
   FolderOpen,
   Settings,
@@ -21,6 +22,8 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Plus,
   X,
   Check,
@@ -66,6 +69,15 @@ import {
   Sparkles,
   Bot,
   Save,
+  LayoutGrid,
+  List,
+  GripVertical,
+  AlertTriangle,
+  Archive,
+  Lightbulb,
+  Play,
+  Pause,
+  Tag,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -101,6 +113,7 @@ export const StatusIcons: Record<string, LucideIcon> = {
 export {
   LayoutDashboard,
   Calendar,
+  CalendarDays,
   FileText,
   FolderOpen,
   Settings,
@@ -119,6 +132,8 @@ export {
   Eye,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Plus,
   X,
   Check,
@@ -164,6 +179,15 @@ export {
   Sparkles,
   Bot,
   Save,
+  LayoutGrid,
+  List,
+  GripVertical,
+  AlertTriangle,
+  Archive,
+  Lightbulb,
+  Play,
+  Pause,
+  Tag,
 }
 
 // Helper component for platform icon with consistent styling

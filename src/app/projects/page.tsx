@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { LoadingPage } from '@/components/ui/Loading'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import {
   PlatformIcon,
   FolderOpen,
@@ -15,11 +16,15 @@ import {
   ClipboardList,
   Target,
   Users,
-  Cog,
   Clock,
   CheckCircle2,
   AlertCircle,
   Settings,
+  X,
+  Save,
+  Trash2,
+  FileText,
+  ChevronRight,
 } from '@/components/ui/Icons'
 
 interface Project {
@@ -56,45 +61,133 @@ interface ProjectSettings {
   autoSchedule: boolean
 }
 
+interface ContentStats {
+  total: number
+  draft: number
+  pending: number
+  approved: number
+  scheduled: number
+  published: number
+}
+
 function ProjectsPageContent() {
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [contentStats, setContentStats] = useState<Record<string, ContentStats>>({})
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState<Partial<Project>>({})
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
   const toast = useToast()
-  
-  useEffect(() => {
-    fetchProjects()
-  }, [])
-  
-  async function fetchProjects() {
+
+  const fetchProjects = useCallback(async () => {
     try {
-      const res = await fetch('/api/projects')
-      const data = await res.json()
-      setProjects(data.projects || [])
+      const [projectsRes, contentRes] = await Promise.all([
+        fetch('/api/projects'),
+        fetch('/api/content'),
+      ])
+
+      const projectsData = await projectsRes.json()
+      const contentData = await contentRes.json()
+
+      setProjects(projectsData.projects || [])
+
+      // Calculate content stats per project
+      const stats: Record<string, ContentStats> = {}
+      const content = contentData.content || []
+
+      for (const project of projectsData.projects || []) {
+        const projectContent = content.filter((c: { projectId: string }) => c.projectId === project.id)
+        stats[project.id] = {
+          total: projectContent.length,
+          draft: projectContent.filter((c: { status: string }) => c.status === 'draft').length,
+          pending: projectContent.filter((c: { status: string }) => c.status === 'ready_for_review').length,
+          approved: projectContent.filter((c: { status: string }) => c.status === 'approved').length,
+          scheduled: projectContent.filter((c: { status: string }) => c.status === 'scheduled').length,
+          published: projectContent.filter((c: { status: string }) => c.status === 'published').length,
+        }
+      }
+      setContentStats(stats)
     } catch (error) {
       console.error('Failed to fetch projects:', error)
       toast.error('Failed to load projects')
     } finally {
       setLoading(false)
     }
-  }
-  
-  const currentProject = selectedProject 
-    ? projects.find(p => p.id === selectedProject) 
+  }, [toast])
+
+  useEffect(() => {
+    fetchProjects()
+  }, [fetchProjects])
+
+  const currentProject = selectedProject
+    ? projects.find(p => p.id === selectedProject)
     : null
-  
+
+  const handleStartEdit = () => {
+    if (currentProject) {
+      setEditForm({ ...currentProject })
+      setIsEditing(true)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setEditForm({})
+  }
+
+  const handleSaveEdit = async () => {
+    if (!currentProject || !editForm) return
+
+    try {
+      const res = await fetch(`/api/projects/${currentProject.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      })
+
+      if (!res.ok) throw new Error('Failed to update')
+
+      toast.success('Project Updated')
+      setIsEditing(false)
+      await fetchProjects()
+    } catch (error) {
+      toast.error('Failed to update project')
+    }
+  }
+
+  const handleDeleteProject = async () => {
+    if (!currentProject) return
+
+    try {
+      const res = await fetch(`/api/projects/${currentProject.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) throw new Error('Failed to delete')
+
+      toast.success('Project Deleted')
+      setSelectedProject(null)
+      setShowDeleteConfirm(false)
+      await fetchProjects()
+    } catch (error) {
+      toast.error('Failed to delete project')
+    }
+  }
+
   if (loading) {
     return <LoadingPage message="Loading projects..." />
   }
-  
+
   return (
     <div className="min-h-screen bg-slate-950 flex">
-      <Sidebar 
+      <Sidebar
         projects={projects}
         selectedProject={selectedProject}
         onProjectChange={setSelectedProject}
       />
-      
+
       <main className="flex-1 p-6 overflow-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -110,70 +203,95 @@ function ProjectsPageContent() {
               Manage your projects and their marketing configurations
             </p>
           </div>
-          
+
           {!selectedProject ? (
             // Projects List
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map(project => (
-                <motion.div
-                  key={project.id}
-                  whileHover={{ scale: 1.02, y: -4 }}
-                  onClick={() => setSelectedProject(project.id)}
-                  className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 cursor-pointer hover:border-cyan-500/50 transition-all"
-                >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-xl bg-slate-700 flex items-center justify-center text-3xl">
-                      {project.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-white">{project.name}</h3>
-                      <p className="text-slate-500 text-sm">{project.description}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-xs text-slate-500 uppercase mb-2 flex items-center gap-1">
-                        <Radio size={12} />
-                        Platforms
+              {projects.map(project => {
+                const stats = contentStats[project.id] || { total: 0, draft: 0, pending: 0, approved: 0, scheduled: 0, published: 0 }
+
+                return (
+                  <motion.div
+                    key={project.id}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    onClick={() => setSelectedProject(project.id)}
+                    className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 cursor-pointer hover:border-cyan-500/50 transition-all"
+                  >
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-14 h-14 rounded-xl bg-slate-700 flex items-center justify-center text-3xl">
+                        {project.icon}
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {project.platforms.map(p => (
-                          <span 
-                            key={p.platform}
-                            className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
-                              p.connectionStatus === 'connected' 
-                                ? 'bg-green-500/20 text-green-400' 
-                                : p.connectionStatus === 'pending'
-                                ? 'bg-yellow-500/20 text-yellow-400'
-                                : 'bg-slate-700 text-slate-400'
-                            }`}
-                          >
-                            <PlatformIcon platform={p.platform} size={12} />
-                            {p.platform}
-                          </span>
-                        ))}
+                      <div>
+                        <h3 className="text-xl font-semibold text-white">{project.name}</h3>
+                        <p className="text-slate-500 text-sm">{project.description}</p>
                       </div>
                     </div>
-                    
-                    <div>
-                      <div className="text-xs text-slate-500 uppercase mb-2 flex items-center gap-1">
-                        <Target size={12} />
-                        Goals
+
+                    {/* Content Stats */}
+                    <div className="grid grid-cols-3 gap-2 mb-4 p-3 bg-slate-800/50 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-white">{stats.total}</div>
+                        <div className="text-xs text-slate-500">Total</div>
                       </div>
-                      <div className="text-sm text-slate-300">
-                        {project.marketingPlan.goals.slice(0, 2).join(' • ')}
-                        {project.marketingPlan.goals.length > 2 && ' ...'}
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-yellow-400">{stats.pending}</div>
+                        <div className="text-xs text-slate-500">Pending</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-green-400">{stats.published}</div>
+                        <div className="text-xs text-slate-500">Published</div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-              
+
+                    <div className="space-y-4">
+                      <div>
+                        <div className="text-xs text-slate-500 uppercase mb-2 flex items-center gap-1">
+                          <Radio size={12} />
+                          Platforms
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {project.platforms.map(p => (
+                            <span
+                              key={p.platform}
+                              className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
+                                p.connectionStatus === 'connected'
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : p.connectionStatus === 'pending'
+                                  ? 'bg-yellow-500/20 text-yellow-400'
+                                  : 'bg-slate-700 text-slate-400'
+                              }`}
+                            >
+                              <PlatformIcon platform={p.platform} size={12} />
+                              {p.platform}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-xs text-slate-500 uppercase mb-2 flex items-center gap-1">
+                          <Target size={12} />
+                          Goals
+                        </div>
+                        <div className="text-sm text-slate-300">
+                          {project.marketingPlan.goals.slice(0, 2).join(' • ')}
+                          {project.marketingPlan.goals.length > 2 && ' ...'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-slate-700 flex items-center justify-between text-xs text-slate-500">
+                      <span>Click to view details</span>
+                      <ChevronRight size={14} />
+                    </div>
+                  </motion.div>
+                )
+              })}
+
               {/* Add New Project Card */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
-                className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-xl p-6 flex items-center justify-center cursor-pointer hover:border-cyan-500/50 transition-all min-h-[200px]"
+                className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-xl p-6 flex items-center justify-center cursor-pointer hover:border-cyan-500/50 transition-all min-h-[300px]"
               >
                 <div className="text-center">
                   <div className="w-14 h-14 rounded-xl bg-slate-800 flex items-center justify-center mx-auto mb-3">
@@ -187,30 +305,130 @@ function ProjectsPageContent() {
             // Project Detail View
             <div>
               <button
-                onClick={() => setSelectedProject(null)}
+                onClick={() => {
+                  setSelectedProject(null)
+                  setIsEditing(false)
+                }}
                 className="text-cyan-400 hover:text-cyan-300 mb-6 flex items-center gap-2 transition-colors"
               >
                 <ChevronLeft size={20} />
                 Back to Projects
               </button>
-              
+
               <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-xl bg-slate-700 flex items-center justify-center text-4xl">
-                      {currentProject.icon}
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm.icon || ''}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, icon: e.target.value }))}
+                          className="w-full h-full bg-transparent text-center text-4xl focus:outline-none"
+                          maxLength={2}
+                        />
+                      ) : (
+                        currentProject.icon
+                      )}
                     </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-white">{currentProject.name}</h2>
-                      <p className="text-slate-400">{currentProject.description}</p>
+                    <div className="flex-1">
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={editForm.name || ''}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                            className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-xl font-bold focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                          />
+                          <input
+                            type="text"
+                            value={editForm.description || ''}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                            className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h2 className="text-2xl font-bold text-white">{currentProject.name}</h2>
+                          <p className="text-slate-400">{currentProject.description}</p>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <button className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center gap-2">
-                    <Edit3 size={16} />
-                    Edit Project
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {isEditing ? (
+                      <>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors flex items-center gap-2"
+                        >
+                          <X size={16} />
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveEdit}
+                          className="px-4 py-2 bg-cyan-500 text-black font-medium rounded-lg hover:bg-cyan-400 transition-colors flex items-center gap-2"
+                        >
+                          <Save size={16} />
+                          Save
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={handleStartEdit}
+                          className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center gap-2"
+                        >
+                          <Edit3 size={16} />
+                          Edit Project
+                        </button>
+                        <button
+                          onClick={() => setShowDeleteConfirm(true)}
+                          className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors flex items-center gap-2"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-                
+
+                {/* Content Stats Bar */}
+                {contentStats[currentProject.id] && (
+                  <div className="grid grid-cols-5 gap-4 mb-8 p-4 bg-slate-800/50 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">{contentStats[currentProject.id].total}</div>
+                      <div className="text-xs text-slate-400 flex items-center justify-center gap-1">
+                        <FileText size={12} /> Total
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-slate-400">{contentStats[currentProject.id].draft}</div>
+                      <div className="text-xs text-slate-400 flex items-center justify-center gap-1">
+                        <Edit3 size={12} /> Drafts
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-400">{contentStats[currentProject.id].pending}</div>
+                      <div className="text-xs text-yellow-400/70 flex items-center justify-center gap-1">
+                        <AlertCircle size={12} /> Pending
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-400">{contentStats[currentProject.id].scheduled}</div>
+                      <div className="text-xs text-blue-400/70 flex items-center justify-center gap-1">
+                        <Clock size={12} /> Scheduled
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-400">{contentStats[currentProject.id].published}</div>
+                      <div className="text-xs text-green-400/70 flex items-center justify-center gap-1">
+                        <CheckCircle2 size={12} /> Published
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Platforms */}
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -219,9 +437,10 @@ function ProjectsPageContent() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {currentProject.platforms.map(platform => (
-                      <div 
+                      <motion.div
                         key={platform.platform}
-                        className="bg-slate-800 rounded-lg p-4 border border-slate-700"
+                        whileHover={{ scale: 1.02 }}
+                        className="bg-slate-800 rounded-lg p-4 border border-slate-700 cursor-pointer hover:border-slate-600 transition-all"
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
@@ -231,8 +450,8 @@ function ProjectsPageContent() {
                             <span className="text-white font-medium capitalize">{platform.platform}</span>
                           </div>
                           <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
-                            platform.connectionStatus === 'connected' 
-                              ? 'bg-green-500/20 text-green-400' 
+                            platform.connectionStatus === 'connected'
+                              ? 'bg-green-500/20 text-green-400'
                               : platform.connectionStatus === 'pending'
                               ? 'bg-yellow-500/20 text-yellow-400'
                               : 'bg-red-500/20 text-red-400'
@@ -256,11 +475,11 @@ function ProjectsPageContent() {
                             {platform.cadence}
                           </div>
                         )}
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Marketing Plan */}
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -282,7 +501,7 @@ function ProjectsPageContent() {
                         ))}
                       </ul>
                     </div>
-                    
+
                     <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                       <div className="text-sm text-slate-500 uppercase mb-3 flex items-center gap-1">
                         <Users size={14} />
@@ -290,7 +509,7 @@ function ProjectsPageContent() {
                       </div>
                       <p className="text-slate-300">{currentProject.marketingPlan.targetAudience}</p>
                     </div>
-                    
+
                     <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                       <div className="text-sm text-slate-500 uppercase mb-3">Content Pillars</div>
                       <div className="flex flex-wrap gap-2">
@@ -301,7 +520,7 @@ function ProjectsPageContent() {
                         ))}
                       </div>
                     </div>
-                    
+
                     {currentProject.marketingPlan.notes && (
                       <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                         <div className="text-sm text-slate-500 uppercase mb-3">Notes</div>
@@ -310,7 +529,7 @@ function ProjectsPageContent() {
                     )}
                   </div>
                 </div>
-                
+
                 {/* Settings */}
                 <div>
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -342,6 +561,22 @@ function ProjectsPageContent() {
           )}
         </motion.div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteProject}
+        title="Delete Project"
+        message={
+          <div>
+            <p className="mb-2">Are you sure you want to delete this project?</p>
+            <p className="text-red-400 text-sm">This will also delete all associated content. This action cannot be undone.</p>
+          </div>
+        }
+        confirmLabel="Delete Project"
+        variant="danger"
+      />
     </div>
   )
 }

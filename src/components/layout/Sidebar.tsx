@@ -13,6 +13,10 @@ import {
   PanelLeftClose,
   PanelLeft,
   Sparkles,
+  Target,
+  BarChart3,
+  BookOpen,
+  Lightbulb,
 } from 'lucide-react'
 import { PlatformIcon } from '@/components/ui/Icons'
 
@@ -31,8 +35,12 @@ interface SidebarProps {
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/calendar', label: 'Calendar', icon: Calendar },
   { href: '/content', label: 'Content', icon: FileText },
+  { href: '/calendar', label: 'Calendar', icon: Calendar },
+  { href: '/campaigns', label: 'Campaigns', icon: Target },
+  { href: '/ideas', label: 'Ideas', icon: Lightbulb },
+  { href: '/templates', label: 'Library', icon: BookOpen },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/projects', label: 'Projects', icon: FolderOpen },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
