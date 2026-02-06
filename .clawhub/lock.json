@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "skills": {
+    "openclaw-mem": {
+      "version": "2.1.0",
+      "installedAt": 1770380630271
+    },
+    "nextjs-expert": {
+      "version": "1.0.0",
+      "installedAt": 1770380736014
+    },
+    "copywriter": {
+      "version": "1.1.0",
+      "installedAt": 1770380737656
+    },
+    "pm2": {
+      "version": "1.0.0",
+      "installedAt": 1770380739364
+    },
+    "cloudflare-api": {
+      "version": "1.0.0",
+      "installedAt": 1770380742007
+    },
+    "git-essentials": {
+      "version": "1.0.0",
+      "installedAt": 1770380754392
+    },
+    "markdown-formatter": {
+      "version": "1.0.0",
+      "installedAt": 1770380756176
+    }
+  }
+}

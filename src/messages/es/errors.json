@@ -1,9 +1,0 @@
-{
-  "fetchFailed": "Error al obtener las tareas",
-  "createFailed": "Error al crear la tarea",
-  "updateFailed": "Error al actualizar la tarea",
-  "deleteFailed": "Error al eliminar la tarea",
-  "notFound": "Tarea no encontrada",
-  "serverError": "Error del servidor",
-  "networkError": "Error de conexión de red"
-}

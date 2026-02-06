@@ -1,9 +1,0 @@
-{
-  "fetchFailed": "Aufgaben konnten nicht abgerufen werden",
-  "createFailed": "Aufgabe konnte nicht erstellt werden",
-  "updateFailed": "Aufgabe konnte nicht aktualisiert werden",
-  "deleteFailed": "Aufgabe konnte nicht gelöscht werden",
-  "notFound": "Aufgabe nicht gefunden",
-  "serverError": "Serverfehler aufgetreten",
-  "networkError": "Netzwerkverbindungsfehler"
-}
