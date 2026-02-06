@@ -1,17 +1,37 @@
 import fs from 'fs'
 import path from 'path'
 
+export type TaskType = 'general' | 'blog' | 'code' | 'review' | 'research'
+
 export interface Task {
-  id: number
+  id: number | string
   title: string
   description: string
   status: 'pending' | 'in_progress' | 'ready_for_review' | 'changes_requested' | 'approved' | 'done' | 'rejected'
   priority: 'low' | 'medium' | 'high'
+  type: TaskType
   assignee: 'robert' | 'leon'
   createdBy: 'robert' | 'leon'
   createdAt: string
   updatedAt: string
   reviewComment?: string
+  
+  // Type-specific content
+  content?: {
+    // For blog posts
+    article?: string           // Full markdown article content
+    languages?: string[]       // Available translations
+    prUrl?: string            // GitHub PR URL
+    
+    // For code tasks
+    repo?: string
+    branch?: string
+    files?: string[]
+    
+    // For research tasks
+    sources?: string[]
+    findings?: string
+  }
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data')
@@ -31,7 +51,12 @@ export function loadTasks(): Task[] {
   try {
     if (fs.existsSync(TASKS_FILE)) {
       const data = fs.readFileSync(TASKS_FILE, 'utf-8')
-      return JSON.parse(data)
+      const tasks = JSON.parse(data)
+      // Ensure all tasks have a type
+      return tasks.map((t: Task) => ({
+        ...t,
+        type: t.type || 'general'
+      }))
     }
   } catch (error) {
     console.error('Failed to load tasks:', error)
@@ -47,9 +72,9 @@ export function saveTasks(tasks: Task[]): void {
 }
 
 // Get a single task
-export function getTask(id: number): Task | undefined {
+export function getTask(id: number | string): Task | undefined {
   const tasks = loadTasks()
-  return tasks.find(t => t.id === id)
+  return tasks.find(t => String(t.id) === String(id))
 }
 
 // Create a new task
@@ -57,8 +82,10 @@ export function createTask(data: {
   title: string
   description: string
   priority: Task['priority']
+  type?: TaskType
   assignee: Task['assignee']
   createdBy: Task['createdBy']
+  content?: Task['content']
 }): Task {
   const tasks = loadTasks()
   
@@ -68,10 +95,12 @@ export function createTask(data: {
     description: data.description,
     status: 'pending',
     priority: data.priority,
+    type: data.type || 'general',
     assignee: data.assignee,
     createdBy: data.createdBy,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    content: data.content,
   }
   
   tasks.push(newTask)
@@ -81,9 +110,9 @@ export function createTask(data: {
 }
 
 // Update a task
-export function updateTask(id: number, updates: Partial<Task>): Task | null {
+export function updateTask(id: number | string, updates: Partial<Task>): Task | null {
   const tasks = loadTasks()
-  const index = tasks.findIndex(t => t.id === id)
+  const index = tasks.findIndex(t => String(t.id) === String(id))
   
   if (index === -1) return null
   
@@ -98,9 +127,9 @@ export function updateTask(id: number, updates: Partial<Task>): Task | null {
 }
 
 // Delete a task
-export function deleteTask(id: number): boolean {
+export function deleteTask(id: number | string): boolean {
   const tasks = loadTasks()
-  const index = tasks.findIndex(t => t.id === id)
+  const index = tasks.findIndex(t => String(t.id) === String(id))
   
   if (index === -1) return false
   

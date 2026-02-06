@@ -41,6 +41,33 @@ Add whatever helps you do your job. This is your cheat sheet.
 
 ---
 
+## Together.ai Models
+
+### FLUX.1-schnell (Image Generation)
+- **Model:** black-forest-labs/FLUX.1-schnell
+- **Use:** Generate images for blog posts, OG images, project assets
+- **Note:** Use mindfully to avoid rate limits
+
+```bash
+curl -X POST "https://api.together.xyz/v1/images/generations" \
+  -H "Authorization: Bearer $TOGETHER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "black-forest-labs/FLUX.1-schnell",
+    "prompt": "your prompt here",
+    "width": 1024,
+    "height": 768,
+    "n": 1
+  }'
+```
+
+### Apriel 1.6 15B Thinker (Text - FREE)
+- **Model:** `ServiceNow-AI/Apriel-1.6-15B-Thinker`
+- **Use:** Reasoning tasks, general text generation
+- **Cost:** Free tier
+
+---
+
 ## My Infrastructure
 
 ### Server
