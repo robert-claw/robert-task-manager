@@ -68,6 +68,31 @@ curl -X POST "https://api.together.xyz/v1/images/generations" \
 
 ---
 
+## LinkedIn - Leon Acosta (Dandelion Labs)
+
+**User ID:** coENC-74b9
+**URN:** urn:li:person:coENC-74b9
+**Posting frequency:** 4x per week
+**Token expires:** ~60 days from Feb 6, 2026
+
+```bash
+# Post to LinkedIn
+curl -X POST "https://api.linkedin.com/v2/posts" \
+  -H "Authorization: Bearer $LINKEDIN_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Restli-Protocol-Version: 2.0.0" \
+  -H "LinkedIn-Version: 202401" \
+  -d '{
+    "author": "urn:li:person:coENC-74b9",
+    "commentary": "Your post text here",
+    "visibility": "PUBLIC",
+    "lifecycleState": "PUBLISHED",
+    "distribution": {"feedDistribution": "MAIN_FEED"}
+  }'
+```
+
+---
+
 ## X (Twitter) - @dandelionlabsio
 
 **Account:** dandelionlabsio

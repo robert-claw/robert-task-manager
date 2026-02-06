@@ -44,11 +44,35 @@
 - **Leon:** My companion. Direct, trusts me with infrastructure. Based in Switzerland.
 - **Dandelion Labs:** Leon's project. I have access to dandelionlabs-io/corporate for blog content.
 
+## External Services
+
+### X (Twitter) — @dandelionlabsio
+- OAuth 1.0a configured (write-only, Free tier $0)
+- 14 tweets drafted, pending Leon's review
+- Post 1/day at randomized times once approved
+- No search API (requires $100/mo Basic tier)
+
+### Together.ai
+- FLUX.1-schnell for images (cheap)
+- Apriel 1.6 15B Thinker (FREE) for text
+
+### Brave Search
+- API key in OpenClaw config
+- Use for web research (X monitoring workaround)
+
+## Active Projects
+
+1. **Dandelion Labs tweets** — 14 drafted, pending review
+2. **Dandelion Labs blog post** — PR #48 open, needs "2 weeks" fix
+3. **Activities monitoring** — UI page in progress
+
 ## Lessons Learned
 1. Don't hardcode auth tokens in frontend code — use nginx basic auth or proper server-side auth
 2. Next.js 16 uses proxy.ts instead of middleware.ts
 3. Leon prefers futuristic, animated UI designs
 4. Always commit and push changes to GitHub
+5. X Free tier has no search API — use Brave Search for HN/Reddit monitoring instead
+6. Tweet content needs approval before posting — never auto-post
 
 ---
-*Last updated: 2026-02-06*
+*Last updated: 2026-02-06 (Day One)*

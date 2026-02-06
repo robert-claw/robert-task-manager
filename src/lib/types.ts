@@ -1,65 +1,156 @@
-// Task Types
-export type TaskStatus = 
-  | 'pending'           // Not started
-  | 'in_progress'       // Being worked on
-  | 'ready_for_review'  // Awaiting approval
-  | 'changes_requested' // Needs revision
-  | 'approved'          // Approved, ready to execute
-  | 'published'         // Executed/deployed
-  | 'done'              // Completed (no publish step)
-  | 'rejected';         // Cancelled/rejected
+// Platform types
+export type Platform = 'linkedin' | 'twitter' | 'blog' | 'instagram' | 'facebook'
 
-export type TaskPriority = 'urgent' | 'high' | 'medium' | 'low';
-export type TaskType = 'task' | 'content' | 'blog';
-export type Assignee = 'robert' | 'leon';
+// Content status workflow
+export type ContentStatus = 
+  | 'draft'
+  | 'ready_for_review'
+  | 'changes_requested'
+  | 'approved'
+  | 'scheduled'
+  | 'published'
 
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  type: TaskType;
-  status: TaskStatus;
-  priority: TaskPriority;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: Assignee;
-  assignedTo: Assignee;
-  content?: string;
-  contentUrl?: string;
-  previewUrl?: string;
-  result?: string;
-  feedback?: string;
-  reviewedAt?: string;
-  publishedAt?: string;
-  tags?: string[];
+// Content types
+export type ContentType = 'post' | 'article' | 'tweet' | 'thread' | 'story' | 'reel'
+
+// Priority levels
+export type Priority = 'low' | 'medium' | 'high' | 'urgent'
+
+// Project interface
+export interface Project {
+  id: string
+  name: string
+  slug: string
+  description: string
+  icon: string
+  color: string
+  platforms: PlatformConfig[]
+  marketingPlan: MarketingPlan
+  settings: ProjectSettings
+  createdAt: string
+  updatedAt: string
 }
 
-// Config types
-export interface StatusConfig {
-  icon: string;
-  label: string;
-  color: string;
-  bg: string;
+export interface PlatformConfig {
+  platform: Platform
+  enabled: boolean
+  accountId?: string
+  accountName?: string
+  connectionStatus: 'connected' | 'pending' | 'disconnected'
+  cadence?: string // e.g., "4x/week", "daily"
 }
 
-export interface TypeConfig {
-  icon: string;
-  label: string;
+export interface MarketingPlan {
+  goals: string[]
+  targetAudience: string
+  contentPillars: string[]
+  notes?: string
 }
 
-// Tab types
-export interface TabConfig {
-  id: Assignee;
-  labelKey: string;
-  icon: string;
-  color: string;
+export interface ProjectSettings {
+  timezone: string
+  defaultAssignee: string
+  autoSchedule: boolean
 }
 
-// Component props
-export interface NewTaskForm {
-  title: string;
-  description: string;
-  priority: TaskPriority;
-  type: TaskType;
-  assignedTo: Assignee;
+// Content item (replaces Task for content)
+export interface ContentItem {
+  id: string
+  projectId: string
+  type: ContentType
+  platform: Platform
+  title: string
+  content: string
+  media?: MediaAttachment[]
+  status: ContentStatus
+  priority: Priority
+  scheduledFor?: string
+  publishedAt?: string
+  publishedUrl?: string
+  createdBy: string
+  assignee: string
+  comments: Comment[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MediaAttachment {
+  id: string
+  type: 'image' | 'video' | 'document'
+  url: string
+  filename: string
+  mimeType: string
+}
+
+export interface Comment {
+  id: string
+  author: string
+  text: string
+  createdAt: string
+  notifyRobert?: boolean
+}
+
+// Activity tracking
+export interface Activity {
+  id: string
+  projectId: string
+  type: string
+  name: string
+  description: string
+  schedule: string
+  lastRun?: string
+  nextRun?: string
+  enabled: boolean
+  config: Record<string, unknown>
+}
+
+// Calendar event (derived from ContentItem)
+export interface CalendarEvent {
+  id: string
+  contentId: string
+  projectId: string
+  title: string
+  platform: Platform
+  status: ContentStatus
+  date: string
+  time?: string
+}
+
+// Notification
+export interface Notification {
+  id: string
+  type: 'comment' | 'status_change' | 'reminder' | 'system'
+  contentId?: string
+  projectId?: string
+  message: string
+  read: boolean
+  createdAt: string
+}
+
+// API response types
+export interface ApiResponse<T> {
+  data?: T
+  error?: string
+  status: 'success' | 'error'
+}
+
+// Legacy task type (for migration)
+export interface LegacyTask {
+  id: string
+  title: string
+  description: string
+  status: string
+  priority: string
+  type: string
+  assignee: string
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  comments: Comment[]
+  content?: {
+    platform?: string
+    tweetText?: string
+    scheduledFor?: string
+    [key: string]: unknown
+  }
 }
