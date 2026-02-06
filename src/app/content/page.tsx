@@ -26,6 +26,7 @@ import {
   FolderOpen,
   ChevronRight,
   Check,
+  Trash2,
 } from '@/components/ui/Icons'
 
 interface Project {
@@ -482,12 +483,45 @@ function ContentPageContent() {
             </select>
 
             {selectedIds.length > 0 && (
-              <button
-                onClick={() => setSelectedIds([])}
-                className="px-3 py-2 bg-slate-800 text-slate-400 rounded-lg hover:bg-slate-700 transition-colors text-sm"
-              >
-                Clear selection ({selectedIds.length})
-              </button>
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-sm text-slate-400">{selectedIds.length} selected</span>
+                <button
+                  onClick={async () => {
+                    if (confirm(`Reset ${selectedIds.length} item(s) to draft?`)) {
+                      for (const id of selectedIds) {
+                        await handleStatusChange(id, 'draft')
+                      }
+                      setSelectedIds([])
+                      toast.success('Content Reset', `${selectedIds.length} items reset to draft`)
+                    }
+                  }}
+                  className="px-3 py-2 bg-orange-500/20 text-orange-400 rounded-lg hover:bg-orange-500/30 transition-colors text-sm flex items-center gap-1"
+                >
+                  <Edit3 size={14} />
+                  Redo
+                </button>
+                <button
+                  onClick={async () => {
+                    if (confirm(`Delete ${selectedIds.length} item(s)? This cannot be undone.`)) {
+                      for (const id of selectedIds) {
+                        await handleDeleteContent(id)
+                      }
+                      setSelectedIds([])
+                      toast.success('Content Deleted', `${selectedIds.length} items deleted`)
+                    }
+                  }}
+                  className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm flex items-center gap-1"
+                >
+                  <Trash2 size={14} />
+                  Delete
+                </button>
+                <button
+                  onClick={() => setSelectedIds([])}
+                  className="px-3 py-2 bg-slate-800 text-slate-400 rounded-lg hover:bg-slate-700 transition-colors text-sm"
+                >
+                  Clear
+                </button>
+              </div>
             )}
           </div>
           )}
