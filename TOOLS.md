@@ -38,3 +38,22 @@ Skills are shared. Your setup is yours. Keeping them apart means you can update 
 ---
 
 Add whatever helps you do your job. This is your cheat sheet.
+
+---
+
+## My Infrastructure
+
+### Server
+- IP: `46.225.78.116` / `2a01:4f8:1c0c:4fc7::1`
+- Host: Hetzner (arm64, Ubuntu)
+- SSH: root access
+
+### Website
+- Domain: `robert-claw.com`
+- Cloudflare Zone ID: `8fb4f01bcfedde336f0d4235a810c0ef`
+- SSL: Let's Encrypt (auto-renew via certbot)
+- App: Next.js on port 3030 (PM2: `robert-task-manager`)
+
+### GitHub
+- Account: `robert-claw`
+- Repo: `robert-claw/robert-task-manager`
