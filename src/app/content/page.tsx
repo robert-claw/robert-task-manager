@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   Eye,
   FileText,
+  FolderOpen,
   ChevronRight,
   Check,
 } from '@/components/ui/Icons'
@@ -78,7 +79,8 @@ const platformOptions = [
 function ContentPageContent() {
   const [projects, setProjects] = useState<Project[]>([])
   const [content, setContent] = useState<ContentItem[]>([])
-  const [selectedProject, setSelectedProject] = useState<string | null>(null)
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([])
+  const [selectedProject, setSelectedProject] = useState<string | null>(null) // For sidebar compatibility
   const [statusFilter, setStatusFilter] = useState('')
   const [platformFilter, setPlatformFilter] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -91,31 +93,57 @@ function ContentPageContent() {
 
   const toast = useToast()
 
+  // Sync sidebar selection with multi-select
+  const handleSidebarProjectChange = (projectId: string | null) => {
+    setSelectedProject(projectId)
+    if (projectId) {
+      setSelectedProjects([projectId])
+    } else {
+      setSelectedProjects([])
+    }
+  }
+
+  // Toggle project in multi-select
+  const toggleProjectSelection = (projectId: string) => {
+    setSelectedProjects(prev => 
+      prev.includes(projectId) 
+        ? prev.filter(id => id !== projectId)
+        : [...prev, projectId]
+    )
+    setSelectedProject(null) // Clear sidebar single selection when using multi-select
+  }
+
   const fetchData = useCallback(async () => {
     try {
       const [projectsRes] = await Promise.all([
         fetch('/api/projects'),
       ])
 
-      let contentUrl = '/api/content?'
-      if (selectedProject) contentUrl += `projectId=${selectedProject}&`
-      if (statusFilter) contentUrl += `status=${statusFilter}&`
-      if (platformFilter) contentUrl += `platform=${platformFilter}&`
+      // Only fetch content if projects are selected
+      let contentData: { content: ContentItem[] } = { content: [] }
+      if (selectedProjects.length > 0) {
+        // Fetch content for each selected project
+        const contentPromises = selectedProjects.map(projectId => {
+          let url = `/api/content?projectId=${projectId}`
+          if (statusFilter) url += `&status=${statusFilter}`
+          if (platformFilter) url += `&platform=${platformFilter}`
+          return fetch(url).then(r => r.json())
+        })
+        const contentResults = await Promise.all(contentPromises)
+        contentData = { content: contentResults.flatMap((r: { content?: ContentItem[] }) => r.content || []) }
+      }
 
-      const [projectsData, contentRes] = await Promise.all([
-        projectsRes.json(),
-        fetch(contentUrl).then(r => r.json()),
-      ])
+      const projectsData = await projectsRes.json()
 
       setProjects(projectsData.projects || [])
-      setContent(contentRes.content || [])
+      setContent(contentData.content || [])
     } catch (error) {
       console.error('Failed to fetch data:', error)
       toast.error('Failed to load content', 'Please try refreshing the page')
     } finally {
       setLoading(false)
     }
-  }, [selectedProject, statusFilter, platformFilter, toast])
+  }, [selectedProjects, statusFilter, platformFilter, toast])
 
   useEffect(() => {
     fetchData()
@@ -339,7 +367,7 @@ function ContentPageContent() {
       <Sidebar
         projects={projects}
         selectedProject={selectedProject}
-        onProjectChange={setSelectedProject}
+        onProjectChange={handleSidebarProjectChange}
       />
 
       <main className="flex-1 p-6 overflow-auto">
@@ -369,7 +397,43 @@ function ContentPageContent() {
             </button>
           </div>
 
-          {/* Quick Actions Panel */}
+          {/* Project Selection */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm text-slate-400">Select projects:</span>
+              {selectedProjects.length > 0 && (
+                <button
+                  onClick={() => setSelectedProjects([])}
+                  className="text-xs text-slate-500 hover:text-slate-300"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {projects.map(project => {
+                const isSelected = selectedProjects.includes(project.id)
+                return (
+                  <button
+                    key={project.id}
+                    onClick={() => toggleProjectSelection(project.id)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                      isSelected
+                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50'
+                        : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600'
+                    }`}
+                  >
+                    <span>{project.icon}</span>
+                    <span>{project.name}</span>
+                    {isSelected && <Check size={14} />}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Quick Actions Panel - Only show when projects selected */}
+          {selectedProjects.length > 0 && (
           <div className="mb-6">
             <ContentActions
               content={content}
@@ -381,8 +445,10 @@ function ContentPageContent() {
               onSelectedIdsChange={setSelectedIds}
             />
           </div>
+          )}
 
-          {/* Filters */}
+          {/* Filters - Only show when projects selected */}
+          {selectedProjects.length > 0 && (
           <div className="flex flex-wrap gap-4 mb-6">
             <div className="relative">
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -424,9 +490,18 @@ function ContentPageContent() {
               </button>
             )}
           </div>
+          )}
 
           {/* Content List - Grouped by Platform */}
-          {filteredContent.length === 0 ? (
+          {selectedProjects.length === 0 ? (
+            <div className="bg-slate-800/50 rounded-xl p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center mx-auto mb-4">
+                <FolderOpen size={32} className="text-slate-500" />
+              </div>
+              <p className="text-slate-400 text-lg mb-2">Select a project to view content</p>
+              <p className="text-slate-500 text-sm">Choose one or more projects above to see their content</p>
+            </div>
+          ) : filteredContent.length === 0 ? (
             <div className="bg-slate-800/50 rounded-xl p-12 text-center">
               <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center mx-auto mb-4">
                 <FileText size={32} className="text-slate-500" />
