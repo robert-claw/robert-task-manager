@@ -1,0 +1,9 @@
+{
+  "fetchFailed": "Failed to fetch tasks",
+  "createFailed": "Failed to create task",
+  "updateFailed": "Failed to update task",
+  "deleteFailed": "Failed to delete task",
+  "notFound": "Task not found",
+  "serverError": "Server error occurred",
+  "networkError": "Network connection error"
+}

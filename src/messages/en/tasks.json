@@ -1,0 +1,60 @@
+{
+  "tabs": {
+    "forLeon": "For Leon",
+    "forRobert": "For Robert"
+  },
+  "newTask": "New Task",
+  "createTask": "Create Task",
+  "title": "Title",
+  "titlePlaceholder": "What needs to be done?",
+  "description": "Description",
+  "descriptionPlaceholder": "Additional details...",
+  "priority": {
+    "label": "Priority",
+    "urgent": "URGENT",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "type": {
+    "label": "Type",
+    "task": "Task",
+    "content": "Content",
+    "blog": "Blog Post"
+  },
+  "assignTo": "Assign to",
+  "status": {
+    "pending": "PENDING",
+    "in_progress": "IN PROGRESS",
+    "ready_for_review": "READY FOR REVIEW",
+    "changes_requested": "CHANGES REQUESTED",
+    "approved": "APPROVED",
+    "published": "PUBLISHED",
+    "done": "DONE",
+    "rejected": "REJECTED"
+  },
+  "actions": {
+    "start": "Start",
+    "submitForReview": "Submit for Review",
+    "approve": "Approve",
+    "requestChanges": "Request Changes",
+    "publish": "Publish",
+    "markDone": "Mark Done",
+    "reject": "Reject"
+  },
+  "content": "CONTENT",
+  "viewContent": "View Content",
+  "preview": "Preview",
+  "feedback": "FEEDBACK",
+  "result": "RESULT",
+  "review": {
+    "title": "Review Task",
+    "feedbackPlaceholder": "Add feedback (optional)...",
+    "approve": "Approve",
+    "requestChanges": "Request Changes"
+  },
+  "empty": {
+    "forLeon": "No tasks for Leon yet",
+    "forRobert": "No tasks for Robert yet"
+  }
+}

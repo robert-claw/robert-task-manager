@@ -1,0 +1,12 @@
+{
+  "appName": "Aufgabenmanager",
+  "appSubtitle": "Robert ↔ Leon Zusammenarbeit",
+  "loading": "Wird initialisiert...",
+  "error": "Etwas ist schiefgelaufen",
+  "retry": "Erneut versuchen",
+  "cancel": "Abbrechen",
+  "save": "Speichern",
+  "delete": "Löschen",
+  "confirm": "Bestätigen",
+  "close": "Schließen"
+}

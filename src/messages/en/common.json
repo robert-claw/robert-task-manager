@@ -1,0 +1,12 @@
+{
+  "appName": "Task Manager",
+  "appSubtitle": "Robert ↔ Leon Collaboration",
+  "loading": "Initializing...",
+  "error": "Something went wrong",
+  "retry": "Retry",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "confirm": "Confirm",
+  "close": "Close"
+}

@@ -1,0 +1,12 @@
+{
+  "appName": "Gestor de Tareas",
+  "appSubtitle": "Colaboración Robert ↔ Leon",
+  "loading": "Inicializando...",
+  "error": "Algo salió mal",
+  "retry": "Reintentar",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "delete": "Eliminar",
+  "confirm": "Confirmar",
+  "close": "Cerrar"
+}

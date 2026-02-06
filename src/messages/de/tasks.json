@@ -1,0 +1,60 @@
+{
+  "tabs": {
+    "forLeon": "Für Leon",
+    "forRobert": "Für Robert"
+  },
+  "newTask": "Neue Aufgabe",
+  "createTask": "Aufgabe erstellen",
+  "title": "Titel",
+  "titlePlaceholder": "Was muss erledigt werden?",
+  "description": "Beschreibung",
+  "descriptionPlaceholder": "Zusätzliche Details...",
+  "priority": {
+    "label": "Priorität",
+    "urgent": "DRINGEND",
+    "high": "Hoch",
+    "medium": "Mittel",
+    "low": "Niedrig"
+  },
+  "type": {
+    "label": "Typ",
+    "task": "Aufgabe",
+    "content": "Inhalt",
+    "blog": "Blogbeitrag"
+  },
+  "assignTo": "Zuweisen an",
+  "status": {
+    "pending": "AUSSTEHEND",
+    "in_progress": "IN BEARBEITUNG",
+    "ready_for_review": "BEREIT ZUR PRÜFUNG",
+    "changes_requested": "ÄNDERUNGEN ANGEFORDERT",
+    "approved": "GENEHMIGT",
+    "published": "VERÖFFENTLICHT",
+    "done": "ERLEDIGT",
+    "rejected": "ABGELEHNT"
+  },
+  "actions": {
+    "start": "Starten",
+    "submitForReview": "Zur Prüfung einreichen",
+    "approve": "Genehmigen",
+    "requestChanges": "Änderungen anfordern",
+    "publish": "Veröffentlichen",
+    "markDone": "Als erledigt markieren",
+    "reject": "Ablehnen"
+  },
+  "content": "INHALT",
+  "viewContent": "Inhalt anzeigen",
+  "preview": "Vorschau",
+  "feedback": "FEEDBACK",
+  "result": "ERGEBNIS",
+  "review": {
+    "title": "Aufgabe prüfen",
+    "feedbackPlaceholder": "Feedback hinzufügen (optional)...",
+    "approve": "Genehmigen",
+    "requestChanges": "Änderungen anfordern"
+  },
+  "empty": {
+    "forLeon": "Noch keine Aufgaben für Leon",
+    "forRobert": "Noch keine Aufgaben für Robert"
+  }
+}
