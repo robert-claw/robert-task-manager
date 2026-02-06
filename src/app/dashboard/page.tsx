@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -40,6 +40,50 @@ interface Task {
     sources?: string[]
     findings?: string
   }
+}
+
+interface Frontmatter {
+  [key: string]: string | undefined
+}
+
+// Parse frontmatter from markdown
+function parseFrontmatter(markdown: string): { frontmatter: Frontmatter; content: string } {
+  const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/
+  const match = markdown.match(frontmatterRegex)
+  
+  if (!match) {
+    return { frontmatter: {}, content: markdown }
+  }
+  
+  const frontmatterStr = match[1]
+  const content = match[2]
+  const frontmatter: Frontmatter = {}
+  
+  frontmatterStr.split('\n').forEach(line => {
+    const colonIndex = line.indexOf(':')
+    if (colonIndex > 0) {
+      const key = line.slice(0, colonIndex).trim()
+      let value = line.slice(colonIndex + 1).trim()
+      // Remove surrounding quotes
+      if ((value.startsWith('"') && value.endsWith('"')) || 
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1)
+      }
+      frontmatter[key] = value
+    }
+  })
+  
+  return { frontmatter, content }
+}
+
+// Reconstruct markdown with frontmatter
+function reconstructMarkdown(frontmatter: Frontmatter, content: string): string {
+  const frontmatterLines = Object.entries(frontmatter)
+    .filter(([_, value]) => value !== undefined && value !== '')
+    .map(([key, value]) => `${key}: "${value}"`)
+    .join('\n')
+  
+  return `---\n${frontmatterLines}\n---\n${content}`
 }
 
 const STATUS_LABELS: Record<Task['status'], string> = {
@@ -82,6 +126,18 @@ const TYPE_LABELS: Record<TaskType, string> = {
   code: 'Code',
   review: 'Review',
   research: 'Research',
+}
+
+const FRONTMATTER_LABELS: Record<string, string> = {
+  title: 'Title',
+  slug: 'Slug',
+  subtitle: 'Subtitle',
+  summary: 'Summary',
+  date: 'Date',
+  author: 'Author',
+  mainImage: 'Main Image',
+  keywords: 'Keywords',
+  category: 'Category',
 }
 
 export default function DashboardPage() {
@@ -310,7 +366,7 @@ export default function DashboardPage() {
 }
 
 function TaskDetailModal({
-  task,
+  task: initialTask,
   user,
   onClose,
   onUpdate,
@@ -320,12 +376,31 @@ function TaskDetailModal({
   onClose: () => void
   onUpdate: () => void
 }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'comments' | 'content' | 'preview'>('overview')
+  const [task, setTask] = useState(initialTask)
+  const [activeTab, setActiveTab] = useState<'overview' | 'comments' | 'article' | 'edit'>('overview')
   const [reviewComment, setReviewComment] = useState('')
   const [newComment, setNewComment] = useState('')
   const [updating, setUpdating] = useState(false)
   const [notifyOnComment, setNotifyOnComment] = useState(true)
   const [notificationSent, setNotificationSent] = useState(false)
+  const [articleSaved, setArticleSaved] = useState(false)
+  
+  // Article editing state
+  const [editedArticle, setEditedArticle] = useState(task.content?.article || '')
+  const [editedFrontmatter, setEditedFrontmatter] = useState<Frontmatter>({})
+  const [editedContent, setEditedContent] = useState('')
+  
+  // Parse frontmatter on load
+  const parsed = useMemo(() => {
+    if (!task.content?.article) return { frontmatter: {}, content: '' }
+    return parseFrontmatter(task.content.article)
+  }, [task.content?.article])
+  
+  useEffect(() => {
+    setEditedFrontmatter(parsed.frontmatter)
+    setEditedContent(parsed.content)
+    setEditedArticle(task.content?.article || '')
+  }, [parsed, task.content?.article])
 
   const handleStatusChange = async (newStatus: Task['status'], comment?: string) => {
     setUpdating(true)
@@ -341,6 +416,39 @@ function TaskDetailModal({
       }
     } catch (error) {
       console.error('Failed to update task:', error)
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleSaveArticle = async () => {
+    setUpdating(true)
+    try {
+      // Reconstruct full markdown
+      const fullArticle = reconstructMarkdown(editedFrontmatter, editedContent)
+      
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: {
+            ...task.content,
+            article: fullArticle,
+          }
+        }),
+      })
+      if (res.ok) {
+        setArticleSaved(true)
+        setTimeout(() => setArticleSaved(false), 3000)
+        // Update local task state
+        setTask(prev => ({
+          ...prev,
+          content: { ...prev.content, article: fullArticle }
+        }))
+        onUpdate()
+      }
+    } catch (error) {
+      console.error('Failed to save article:', error)
     } finally {
       setUpdating(false)
     }
@@ -371,7 +479,7 @@ function TaskDetailModal({
         const taskRes = await fetch(`/api/tasks/${task.id}`)
         if (taskRes.ok) {
           const data = await taskRes.json()
-          task.comments = data.task.comments
+          setTask(prev => ({ ...prev, comments: data.task.comments }))
         }
       }
     } catch (error) {
@@ -385,14 +493,14 @@ function TaskDetailModal({
   const canSubmitForReview = task.assignee === user && ['pending', 'in_progress', 'changes_requested'].includes(task.status)
   const hasBlogContent = task.type === 'blog' && task.content?.article
 
-  const tabs: { id: 'overview' | 'comments' | 'content' | 'preview'; label: string }[] = [
+  const tabs: { id: 'overview' | 'comments' | 'article' | 'edit'; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'comments', label: `💬 Comments${task.comments?.length ? ` (${task.comments.length})` : ''}` },
   ]
   
   if (hasBlogContent) {
-    tabs.push({ id: 'preview', label: '📄 Article Preview' })
-    tabs.push({ id: 'content', label: '📝 Raw Markdown' })
+    tabs.push({ id: 'article', label: '📄 Article' })
+    tabs.push({ id: 'edit', label: '✏️ Edit' })
   }
 
   return (
@@ -547,7 +655,6 @@ function TaskDetailModal({
 
           {activeTab === 'comments' && (
             <div className="space-y-6">
-              {/* Comment Thread */}
               <div className="space-y-4">
                 {(!task.comments || task.comments.length === 0) ? (
                   <p className="text-zinc-500 text-center py-8">No comments yet. Start the conversation!</p>
@@ -578,7 +685,6 @@ function TaskDetailModal({
                 )}
               </div>
 
-              {/* Add Comment */}
               <div className="border-t border-zinc-800 pt-4">
                 <div className="flex items-center gap-2 mb-3">
                   <h3 className="text-sm font-medium text-white">Add Comment</h3>
@@ -622,21 +728,98 @@ function TaskDetailModal({
             </div>
           )}
 
-          {activeTab === 'preview' && hasBlogContent && (
-            <div className="bg-zinc-800/30 rounded-xl p-6 min-h-[400px]">
-              <div className="prose prose-invert prose-lg max-w-none markdown-body">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {task.content!.article!}
-                </ReactMarkdown>
+          {activeTab === 'article' && hasBlogContent && (
+            <div className="space-y-6">
+              {/* Frontmatter Fields */}
+              <div className="bg-zinc-800/50 rounded-xl p-4">
+                <h3 className="text-sm font-medium text-zinc-400 mb-4">Article Metadata</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(parsed.frontmatter).map(([key, value]) => (
+                    <div key={key} className={key === 'summary' || key === 'keywords' ? 'col-span-2' : ''}>
+                      <p className="text-xs text-zinc-500 mb-1">{FRONTMATTER_LABELS[key] || key}</p>
+                      <p className={`text-white ${key === 'summary' ? 'text-sm' : ''}`}>
+                        {value || <span className="text-zinc-600">Not set</span>}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Article Content Preview */}
+              <div>
+                <h3 className="text-sm font-medium text-zinc-400 mb-2">Article Content</h3>
+                <div className="bg-zinc-800/30 rounded-xl p-6">
+                  <div className="prose prose-invert prose-lg max-w-none markdown-body">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {parsed.content}
+                    </ReactMarkdown>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          {activeTab === 'content' && hasBlogContent && (
-            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 min-h-[400px]">
-              <pre className="text-zinc-300 whitespace-pre-wrap font-mono text-sm leading-relaxed">
-                {task.content!.article!}
-              </pre>
+          {activeTab === 'edit' && hasBlogContent && (
+            <div className="space-y-6">
+              {/* Editable Frontmatter Fields */}
+              <div className="bg-zinc-800/50 rounded-xl p-4">
+                <h3 className="text-sm font-medium text-zinc-400 mb-4">Edit Metadata</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(editedFrontmatter).map(([key, value]) => (
+                    <div key={key} className={key === 'summary' || key === 'keywords' ? 'col-span-2' : ''}>
+                      <label className="text-xs text-zinc-500 mb-1 block">
+                        {FRONTMATTER_LABELS[key] || key}
+                      </label>
+                      {key === 'summary' ? (
+                        <textarea
+                          value={value || ''}
+                          onChange={(e) => setEditedFrontmatter(prev => ({ ...prev, [key]: e.target.value }))}
+                          className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                          rows={2}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={value || ''}
+                          onChange={(e) => setEditedFrontmatter(prev => ({ ...prev, [key]: e.target.value }))}
+                          className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Editable Article Content */}
+              <div>
+                <label className="text-sm font-medium text-zinc-400 mb-2 block">Edit Article Content (Markdown)</label>
+                <textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  rows={20}
+                />
+              </div>
+
+              {/* Save Button */}
+              <div className="flex items-center justify-between">
+                {articleSaved && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-green-400 text-sm"
+                  >
+                    ✓ Article saved!
+                  </motion.span>
+                )}
+                <button
+                  onClick={handleSaveArticle}
+                  disabled={updating}
+                  className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-cyan-600/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors ml-auto"
+                >
+                  {updating ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
             </div>
           )}
         </div>
