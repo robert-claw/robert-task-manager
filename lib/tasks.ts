@@ -1,20 +1,39 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-export type TaskStatus = 'pending' | 'in_progress' | 'done' | 'rejected';
+export type TaskStatus = 
+  | 'pending'           // Not started
+  | 'in_progress'       // Being worked on
+  | 'ready_for_review'  // Awaiting approval
+  | 'changes_requested' // Needs revision
+  | 'approved'          // Approved, ready to execute
+  | 'published'         // Executed/deployed
+  | 'done'              // Completed (no publish step)
+  | 'rejected';         // Cancelled/rejected
 export type TaskPriority = 'urgent' | 'high' | 'medium' | 'low';
+
+export type TaskType = 'task' | 'content' | 'blog';
 
 export interface Task {
   id: string;
   title: string;
   description?: string;
+  type: TaskType;
   status: TaskStatus;
   priority: TaskPriority;
   createdAt: string;
   updatedAt: string;
   createdBy: 'robert' | 'leon';
   assignedTo: 'robert' | 'leon';
-  result?: string;
+  // Content/deliverable fields
+  content?: string;        // Markdown content or notes
+  contentUrl?: string;     // Link to PR, file, or preview
+  previewUrl?: string;     // Preview/staging URL
+  // Feedback/result fields
+  result?: string;         // Final result notes
+  feedback?: string;       // Review feedback
+  reviewedAt?: string;     // When it was reviewed
+  publishedAt?: string;    // When it was published
   tags?: string[];
 }
 
