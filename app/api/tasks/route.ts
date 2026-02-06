@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTasks, createTask, type Task } from '@/lib/tasks';
+import { getTasks, createTask } from '@/lib/tasks';
 
-const AUTH_TOKEN = process.env.AUTH_TOKEN || 'robert-secret-token';
+// Auth is handled by nginx basic auth - API is open behind the proxy
 
-function checkAuth(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '');
-  return token === AUTH_TOKEN;
-}
-
-export async function GET(request: NextRequest) {
-  if (!checkAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export async function GET() {
   try {
     const tasks = await getTasks();
     // Sort by priority then by date
@@ -29,10 +20,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!checkAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const body = await request.json();
     const task = await createTask(body);
