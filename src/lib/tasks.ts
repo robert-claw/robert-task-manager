@@ -3,6 +3,13 @@ import path from 'path'
 
 export type TaskType = 'general' | 'blog' | 'code' | 'review' | 'research'
 
+export interface Comment {
+  id: number
+  author: 'robert' | 'leon'
+  text: string
+  createdAt: string
+}
+
 export interface Task {
   id: number | string
   title: string
@@ -15,13 +22,15 @@ export interface Task {
   createdAt: string
   updatedAt: string
   reviewComment?: string
+  feedback?: string
+  comments?: Comment[]
   
   // Type-specific content
   content?: {
     // For blog posts
-    article?: string           // Full markdown article content
-    languages?: string[]       // Available translations
-    prUrl?: string            // GitHub PR URL
+    article?: string
+    languages?: string[]
+    prUrl?: string
     
     // For code tasks
     repo?: string
@@ -34,8 +43,19 @@ export interface Task {
   }
 }
 
+export interface Notification {
+  id: number
+  taskId: string | number
+  taskTitle: string
+  message: string
+  from: 'leon' | 'robert'
+  createdAt: string
+  read: boolean
+}
+
 const DATA_DIR = path.join(process.cwd(), 'data')
 const TASKS_FILE = path.join(DATA_DIR, 'tasks.json')
+const NOTIFICATIONS_FILE = path.join(DATA_DIR, 'notifications.json')
 
 // Ensure data directory exists
 function ensureDataDir() {
@@ -52,10 +72,10 @@ export function loadTasks(): Task[] {
     if (fs.existsSync(TASKS_FILE)) {
       const data = fs.readFileSync(TASKS_FILE, 'utf-8')
       const tasks = JSON.parse(data)
-      // Ensure all tasks have a type
       return tasks.map((t: Task) => ({
         ...t,
-        type: t.type || 'general'
+        type: t.type || 'general',
+        comments: t.comments || []
       }))
     }
   } catch (error) {
@@ -101,6 +121,7 @@ export function createTask(data: {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: data.content,
+    comments: [],
   }
   
   tasks.push(newTask)
@@ -126,6 +147,30 @@ export function updateTask(id: number | string, updates: Partial<Task>): Task | 
   return tasks[index]
 }
 
+// Add comment to a task
+export function addComment(taskId: number | string, author: 'robert' | 'leon', text: string): Comment | null {
+  const tasks = loadTasks()
+  const index = tasks.findIndex(t => String(t.id) === String(taskId))
+  
+  if (index === -1) return null
+  
+  const comment: Comment = {
+    id: Date.now(),
+    author,
+    text,
+    createdAt: new Date().toISOString(),
+  }
+  
+  if (!tasks[index].comments) {
+    tasks[index].comments = []
+  }
+  tasks[index].comments.push(comment)
+  tasks[index].updatedAt = new Date().toISOString()
+  
+  saveTasks(tasks)
+  return comment
+}
+
 // Delete a task
 export function deleteTask(id: number | string): boolean {
   const tasks = loadTasks()
@@ -137,4 +182,65 @@ export function deleteTask(id: number | string): boolean {
   saveTasks(tasks)
   
   return true
+}
+
+// Notifications
+export function loadNotifications(): Notification[] {
+  ensureDataDir()
+  
+  try {
+    if (fs.existsSync(NOTIFICATIONS_FILE)) {
+      const data = fs.readFileSync(NOTIFICATIONS_FILE, 'utf-8')
+      return JSON.parse(data)
+    }
+  } catch (error) {
+    console.error('Failed to load notifications:', error)
+  }
+  
+  return []
+}
+
+export function saveNotifications(notifications: Notification[]): void {
+  ensureDataDir()
+  fs.writeFileSync(NOTIFICATIONS_FILE, JSON.stringify(notifications, null, 2))
+}
+
+export function addNotification(data: {
+  taskId: string | number
+  taskTitle: string
+  message: string
+  from: 'leon' | 'robert'
+}): Notification {
+  const notifications = loadNotifications()
+  
+  const notification: Notification = {
+    id: Date.now(),
+    taskId: data.taskId,
+    taskTitle: data.taskTitle,
+    message: data.message,
+    from: data.from,
+    createdAt: new Date().toISOString(),
+    read: false,
+  }
+  
+  notifications.push(notification)
+  saveNotifications(notifications)
+  
+  return notification
+}
+
+export function markNotificationsRead(ids?: number[]): void {
+  const notifications = loadNotifications()
+  
+  notifications.forEach(n => {
+    if (!ids || ids.includes(n.id)) {
+      n.read = true
+    }
+  })
+  
+  saveNotifications(notifications)
+}
+
+export function getUnreadNotifications(): Notification[] {
+  return loadNotifications().filter(n => !n.read)
 }

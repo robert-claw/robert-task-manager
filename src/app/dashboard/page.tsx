@@ -9,6 +9,13 @@ import remarkGfm from 'remark-gfm'
 
 type TaskType = 'general' | 'blog' | 'code' | 'review' | 'research'
 
+interface Comment {
+  id: number
+  author: 'robert' | 'leon'
+  text: string
+  createdAt: string
+}
+
 interface Task {
   id: number | string
   title: string
@@ -22,6 +29,7 @@ interface Task {
   updatedAt: string
   reviewComment?: string
   feedback?: string
+  comments?: Comment[]
   content?: {
     article?: string
     languages?: string[]
@@ -86,7 +94,6 @@ export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
-  // Auth check
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
     const savedUser = localStorage.getItem('auth_user')
@@ -145,7 +152,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
-      {/* Header */}
       <header className="border-b border-zinc-800 sticky top-0 bg-zinc-950/80 backdrop-blur-md z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -169,7 +175,6 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Total Tasks', value: stats.total, color: 'text-white' },
@@ -184,10 +189,8 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex flex-wrap items-center gap-2">
-            {/* Owner filter */}
             {(['all', 'mine', 'assigned'] as const).map((f) => (
               <button
                 key={f}
@@ -204,7 +207,6 @@ export default function DashboardPage() {
             
             <span className="text-zinc-600 mx-2">|</span>
             
-            {/* Type filter */}
             {(['all', 'blog', 'code', 'review', 'research', 'general'] as const).map((t) => (
               <button
                 key={t}
@@ -231,7 +233,6 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* Task List */}
         <div className="space-y-3">
           <AnimatePresence>
             {filteredTasks.length === 0 ? (
@@ -263,9 +264,9 @@ export default function DashboardPage() {
                         <span className={`text-xs font-medium ${PRIORITY_COLORS[task.priority]}`}>
                           {task.priority.toUpperCase()}
                         </span>
-                        {task.content?.languages && (
-                          <span className="text-xs text-zinc-500">
-                            {task.content.languages.join(', ')}
+                        {task.comments && task.comments.length > 0 && (
+                          <span className="text-xs text-zinc-500 flex items-center gap-1">
+                            💬 {task.comments.length}
                           </span>
                         )}
                       </div>
@@ -284,7 +285,6 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* Task Detail Modal */}
       <AnimatePresence>
         {selectedTask && (
           <TaskDetailModal
@@ -296,7 +296,6 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Create Task Modal */}
       <AnimatePresence>
         {showCreateModal && (
           <CreateTaskModal
@@ -310,7 +309,6 @@ export default function DashboardPage() {
   )
 }
 
-// Task Detail Modal Component with type-specific views
 function TaskDetailModal({
   task,
   user,
@@ -322,9 +320,12 @@ function TaskDetailModal({
   onClose: () => void
   onUpdate: () => void
 }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'preview'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'comments' | 'content' | 'preview'>('overview')
   const [reviewComment, setReviewComment] = useState('')
+  const [newComment, setNewComment] = useState('')
   const [updating, setUpdating] = useState(false)
+  const [notifyOnComment, setNotifyOnComment] = useState(true)
+  const [notificationSent, setNotificationSent] = useState(false)
 
   const handleStatusChange = async (newStatus: Task['status'], comment?: string) => {
     setUpdating(true)
@@ -345,13 +346,48 @@ function TaskDetailModal({
     }
   }
 
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return
+    
+    setUpdating(true)
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: newComment,
+          author: user,
+          notify: notifyOnComment,
+        }),
+      })
+      if (res.ok) {
+        setNewComment('')
+        if (notifyOnComment) {
+          setNotificationSent(true)
+          setTimeout(() => setNotificationSent(false), 3000)
+        }
+        onUpdate()
+        // Refresh task data
+        const taskRes = await fetch(`/api/tasks/${task.id}`)
+        if (taskRes.ok) {
+          const data = await taskRes.json()
+          task.comments = data.task.comments
+        }
+      }
+    } catch (error) {
+      console.error('Failed to add comment:', error)
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   const canReview = task.assignee !== user && task.status === 'ready_for_review'
   const canSubmitForReview = task.assignee === user && ['pending', 'in_progress', 'changes_requested'].includes(task.status)
   const hasBlogContent = task.type === 'blog' && task.content?.article
 
-  // Determine available tabs based on task type
-  const tabs: { id: 'overview' | 'content' | 'preview'; label: string }[] = [
+  const tabs: { id: 'overview' | 'comments' | 'content' | 'preview'; label: string }[] = [
     { id: 'overview', label: 'Overview' },
+    { id: 'comments', label: `💬 Comments${task.comments?.length ? ` (${task.comments.length})` : ''}` },
   ]
   
   if (hasBlogContent) {
@@ -374,7 +410,6 @@ function TaskDetailModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
       >
-        {/* Header */}
         <div className="p-6 border-b border-zinc-800 shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -384,9 +419,6 @@ function TaskDetailModal({
               </span>
               <span className={`text-xs font-medium ${PRIORITY_COLORS[task.priority]}`}>
                 {task.priority.toUpperCase()}
-              </span>
-              <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded">
-                {TYPE_LABELS[task.type || 'general']}
               </span>
             </div>
             <button onClick={onClose} className="text-zinc-400 hover:text-white">
@@ -399,46 +431,28 @@ function TaskDetailModal({
           <p className="text-zinc-400 mt-1">
             Created by <span className="text-cyan-400">{task.createdBy}</span> • 
             Assigned to <span className="text-cyan-400">{task.assignee}</span>
-            {task.content?.prUrl && (
-              <>
-                {' • '}
-                <a 
-                  href={task.content.prUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300 underline"
-                >
-                  View PR
-                </a>
-              </>
-            )}
           </p>
         </div>
 
-        {/* Tabs */}
-        {tabs.length > 1 && (
-          <div className="flex gap-1 px-6 pt-4 border-b border-zinc-800 shrink-0">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-t-lg text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-zinc-800 text-white border-b-2 border-cyan-500'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="flex gap-1 px-6 pt-4 border-b border-zinc-800 shrink-0">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-t-lg text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-zinc-800 text-white border-b-2 border-cyan-500'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Description */}
               <div>
                 <h3 className="text-sm font-medium text-zinc-400 mb-2">Description</h3>
                 <div className="bg-zinc-800/50 rounded-xl p-4">
@@ -450,7 +464,6 @@ function TaskDetailModal({
                 </div>
               </div>
 
-              {/* Review Comment / Feedback */}
               {(task.reviewComment || task.feedback) && (
                 <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
                   <p className="text-yellow-400 font-medium mb-1">Feedback:</p>
@@ -458,7 +471,6 @@ function TaskDetailModal({
                 </div>
               )}
 
-              {/* Type-specific metadata */}
               {task.type === 'blog' && task.content && (
                 <div className="grid grid-cols-2 gap-4">
                   {task.content.languages && (
@@ -483,28 +495,6 @@ function TaskDetailModal({
                 </div>
               )}
 
-              {task.type === 'code' && task.content && (
-                <div className="space-y-3">
-                  {task.content.repo && (
-                    <div className="bg-zinc-800/50 rounded-lg p-3">
-                      <p className="text-xs text-zinc-500 mb-1">Repository</p>
-                      <p className="text-white font-mono text-sm">{task.content.repo}</p>
-                    </div>
-                  )}
-                  {task.content.files && task.content.files.length > 0 && (
-                    <div className="bg-zinc-800/50 rounded-lg p-3">
-                      <p className="text-xs text-zinc-500 mb-2">Files</p>
-                      <ul className="space-y-1">
-                        {task.content.files.map((file, i) => (
-                          <li key={i} className="text-white font-mono text-sm">{file}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Review Actions */}
               {canReview && (
                 <div className="p-4 bg-zinc-800/50 rounded-xl">
                   <p className="text-white font-medium mb-3">Review this task:</p>
@@ -541,7 +531,6 @@ function TaskDetailModal({
                 </div>
               )}
 
-              {/* Submit for Review */}
               {canSubmitForReview && (
                 <div>
                   <button
@@ -553,6 +542,83 @@ function TaskDetailModal({
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'comments' && (
+            <div className="space-y-6">
+              {/* Comment Thread */}
+              <div className="space-y-4">
+                {(!task.comments || task.comments.length === 0) ? (
+                  <p className="text-zinc-500 text-center py-8">No comments yet. Start the conversation!</p>
+                ) : (
+                  task.comments.map((comment) => (
+                    <div 
+                      key={comment.id} 
+                      className={`p-4 rounded-xl ${
+                        comment.author === 'robert' 
+                          ? 'bg-cyan-900/20 border border-cyan-800/30 ml-8' 
+                          : 'bg-zinc-800/50 border border-zinc-700 mr-8'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">{comment.author === 'robert' ? '🦞' : '👤'}</span>
+                        <span className="font-medium text-white capitalize">{comment.author}</span>
+                        <span className="text-xs text-zinc-500">
+                          {new Date(comment.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="markdown-body">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {comment.text}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Add Comment */}
+              <div className="border-t border-zinc-800 pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-sm font-medium text-white">Add Comment</h3>
+                  <label className="flex items-center gap-2 text-sm text-zinc-400 ml-auto cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={notifyOnComment}
+                      onChange={(e) => setNotifyOnComment(e.target.checked)}
+                      className="rounded border-zinc-600 bg-zinc-700 text-cyan-500 focus:ring-cyan-500"
+                    />
+                    🔔 Notify Robert
+                  </label>
+                </div>
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Write your feedback... (Markdown supported)"
+                  className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono text-sm"
+                  rows={4}
+                />
+                <div className="flex items-center justify-between mt-3">
+                  {notificationSent && (
+                    <motion.span
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="text-green-400 text-sm"
+                    >
+                      ✓ Robert will be notified!
+                    </motion.span>
+                  )}
+                  <button
+                    onClick={handleAddComment}
+                    disabled={updating || !newComment.trim()}
+                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-cyan-600/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors ml-auto"
+                  >
+                    {updating ? 'Sending...' : 'Send Comment'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -579,7 +645,6 @@ function TaskDetailModal({
   )
 }
 
-// Create Task Modal Component
 function CreateTaskModal({
   user,
   onClose,
@@ -596,8 +661,6 @@ function CreateTaskModal({
   const [assignee, setAssignee] = useState<'robert' | 'leon'>('robert')
   const [showPreview, setShowPreview] = useState(false)
   const [creating, setCreating] = useState(false)
-  
-  // Blog-specific
   const [articleContent, setArticleContent] = useState('')
   const [prUrl, setPrUrl] = useState('')
 
@@ -652,7 +715,6 @@ function CreateTaskModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
       >
-        {/* Header */}
         <div className="p-6 border-b border-zinc-800 flex items-center justify-between shrink-0">
           <h2 className="text-xl font-bold text-white">Create New Task</h2>
           <button onClick={onClose} className="text-zinc-400 hover:text-white">
@@ -662,7 +724,6 @@ function CreateTaskModal({
           </button>
         </div>
 
-        {/* Form */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">Title</label>
@@ -756,7 +817,6 @@ function CreateTaskModal({
             )}
           </div>
 
-          {/* Blog-specific fields */}
           {taskType === 'blog' && (
             <>
               <div>
@@ -783,7 +843,6 @@ function CreateTaskModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="p-6 border-t border-zinc-800 flex justify-end gap-3 shrink-0">
           <button
             onClick={onClose}

@@ -1,5 +1,8 @@
 # HEARTBEAT.md
 
-# Keep this file empty (or with only comments) to skip heartbeat API calls.
-
-# Add tasks below when you want the agent to check something periodically.
+## Task Notifications Check
+Check for unread notifications from the task manager:
+```
+curl -s http://localhost:3030/api/notifications?unread=true
+```
+If there are unread notifications, alert Leon via the current session.
