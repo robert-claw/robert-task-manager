@@ -354,23 +354,30 @@ function DashboardContent() {
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Quick Action Indicator */}
+                {/* Quick Action Indicator - Clickable */}
                 {urgencyScore > 0 && (
-                  <motion.div
+                  <motion.button
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 flex items-center gap-3"
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => setStatsModal({
+                      isOpen: true,
+                      title: 'Items Needing Attention',
+                      filter: (item) => item.status === 'ready_for_review' || item.status === 'changes_requested',
+                    })}
+                    className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-yellow-500/20 transition-colors cursor-pointer"
                   >
                     <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
                       <Target size={20} className="text-yellow-400" />
                     </div>
-                    <div>
+                    <div className="text-left">
                       <div className="text-yellow-400 font-medium text-sm">Action Required</div>
                       <div className="text-slate-400 text-xs">
                         {needsAttention.length} item{needsAttention.length !== 1 ? 's' : ''} need your attention
                       </div>
                     </div>
-                  </motion.div>
+                    <ChevronRight size={16} className="text-yellow-400" />
+                  </motion.button>
                 )}
 
                 {/* Create Content Button */}

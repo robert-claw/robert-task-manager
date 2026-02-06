@@ -425,142 +425,155 @@ function ContentPageContent() {
             )}
           </div>
 
-          {/* Content List */}
-          <div className="space-y-4">
-            {filteredContent.length === 0 ? (
-              <div className="bg-slate-800/50 rounded-xl p-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center mx-auto mb-4">
-                  <FileText size={32} className="text-slate-500" />
-                </div>
-                <p className="text-slate-400 text-lg mb-2">No content found</p>
-                <p className="text-slate-500 text-sm mb-4">Try adjusting your filters or create new content</p>
-                <button
-                  onClick={() => setShowNewContentModal(true)}
-                  className="px-4 py-2 bg-cyan-500 text-black font-medium rounded-lg hover:bg-cyan-400 transition-colors inline-flex items-center gap-2"
-                >
-                  <Plus size={18} />
-                  Create Content
-                </button>
+          {/* Content List - Grouped by Platform */}
+          {filteredContent.length === 0 ? (
+            <div className="bg-slate-800/50 rounded-xl p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center mx-auto mb-4">
+                <FileText size={32} className="text-slate-500" />
               </div>
-            ) : (
-              filteredContent.map(item => {
-                const config = statusConfig[item.status] || statusConfig.draft
-                const StatusIconComponent = config.icon
-                const isSelected = selectedIds.includes(item.id)
-
+              <p className="text-slate-400 text-lg mb-2">No content found</p>
+              <p className="text-slate-500 text-sm mb-4">Try adjusting your filters or create new content</p>
+              <button
+                onClick={() => setShowNewContentModal(true)}
+                className="px-4 py-2 bg-cyan-500 text-black font-medium rounded-lg hover:bg-cyan-400 transition-colors inline-flex items-center gap-2"
+              >
+                <Plus size={18} />
+                Create Content
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Group by platform */}
+              {['linkedin', 'twitter', 'blog'].map(platform => {
+                const platformContent = filteredContent.filter(c => c.platform === platform)
+                if (platformContent.length === 0 && platformFilter && platformFilter !== platform) return null
+                
+                const platformLabels: Record<string, string> = {
+                  linkedin: 'LinkedIn',
+                  twitter: 'Twitter',
+                  blog: 'Blog',
+                }
+                
                 return (
-                  <motion.div
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className={`bg-slate-800/50 border rounded-xl p-4 cursor-pointer transition-all ${
-                      isSelected ? 'border-cyan-500 ring-2 ring-cyan-500/20' : 'border-slate-700 hover:border-cyan-500/30'
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      {/* Selection Checkbox */}
-                      <div className="shrink-0 pt-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleSelection(item.id)
-                          }}
-                          className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                            isSelected
-                              ? 'bg-cyan-500 border-cyan-500'
-                              : 'border-slate-600 hover:border-slate-500'
-                          }`}
-                        >
-                          {isSelected && <Check size={12} className="text-black" />}
-                        </button>
-                      </div>
-
-                      <div
-                        className="flex-1 min-w-0 flex items-start gap-4"
-                        onClick={() => setSelectedContent(item)}
-                      >
-                        <div className="w-12 h-12 rounded-lg bg-slate-700 flex items-center justify-center shrink-0">
-                          <PlatformIcon platform={item.platform} size={24} className="text-slate-300" />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-white font-medium truncate">{item.title}</h3>
-                            <span className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${config.bg} ${config.text} border ${config.border}`}>
-                              <StatusIconComponent size={12} />
-                              {config.label}
-                            </span>
-                          </div>
-
-                          <p className="text-slate-400 text-sm line-clamp-2 mb-2">
-                            {item.content}
-                          </p>
-
-                          <div className="flex items-center gap-4 text-xs text-slate-500">
-                            <span className="flex items-center gap-1">
-                              {projects.find(p => p.id === item.projectId)?.icon}
-                              {projects.find(p => p.id === item.projectId)?.name}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <User size={12} />
-                              {item.createdBy}
-                            </span>
-                            {item.scheduledFor && (
-                              <span className="text-cyan-400 flex items-center gap-1">
-                                <Calendar size={12} />
-                                {new Date(item.scheduledFor).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          {item.status === 'ready_for_review' && (
-                            <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleStatusChange(item.id, 'approved')
-                                }}
-                                className="px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 text-sm flex items-center gap-1 transition-colors"
-                              >
-                                <Check size={14} />
-                                Approve
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleStatusChange(item.id, 'changes_requested')
-                                }}
-                                className="px-3 py-1.5 bg-orange-500/20 text-orange-400 rounded-lg hover:bg-orange-500/30 text-sm flex items-center gap-1 transition-colors"
-                              >
-                                <Edit3 size={14} />
-                                Changes
-                              </button>
-                            </>
-                          )}
-                          {item.status === 'approved' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleStatusChange(item.id, 'published')
-                              }}
-                              className="px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 text-sm flex items-center gap-1 transition-colors"
-                            >
-                              <Rocket size={14} />
-                              Publish
-                            </button>
-                          )}
-                          <ChevronRight size={18} className="text-slate-600" />
-                        </div>
+                  <div key={platform} className="bg-slate-800/30 rounded-xl border border-slate-700/50">
+                    {/* Platform Header */}
+                    <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <PlatformIcon platform={platform} size={20} className="text-slate-400" />
+                        <h3 className="text-white font-medium">{platformLabels[platform]}</h3>
+                        <span className="text-slate-500 text-sm">({platformContent.length})</span>
                       </div>
                     </div>
-                  </motion.div>
+                    
+                    {/* Content Items */}
+                    <div className="p-2 space-y-1 max-h-[600px] overflow-y-auto">
+                      {platformContent.length === 0 ? (
+                        <div className="text-center py-8 text-slate-500 text-sm">
+                          No {platformLabels[platform]} content
+                        </div>
+                      ) : (
+                        platformContent.map(item => {
+                          const config = statusConfig[item.status] || statusConfig.draft
+                          const isSelected = selectedIds.includes(item.id)
+
+                          return (
+                            <motion.div
+                              key={item.id}
+                              layout
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              onClick={() => setSelectedContent(item)}
+                              className={`p-3 rounded-lg cursor-pointer transition-all group ${
+                                isSelected 
+                                  ? 'bg-cyan-500/10 border border-cyan-500/50' 
+                                  : 'hover:bg-slate-800 border border-transparent'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                {/* Selection Checkbox */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleSelection(item.id)
+                                  }}
+                                  className={`w-4 h-4 rounded border flex items-center justify-center transition-colors mt-0.5 shrink-0 ${
+                                    isSelected
+                                      ? 'bg-cyan-500 border-cyan-500'
+                                      : 'border-slate-600 hover:border-slate-500 opacity-0 group-hover:opacity-100'
+                                  }`}
+                                >
+                                  {isSelected && <Check size={10} className="text-black" />}
+                                </button>
+
+                                <div className="flex-1 min-w-0">
+                                  {/* Title */}
+                                  <div className="text-white text-sm font-medium truncate mb-1">
+                                    {item.title}
+                                  </div>
+                                  
+                                  {/* Status & Schedule */}
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <span className={`px-1.5 py-0.5 rounded ${config.bg} ${config.text}`}>
+                                      {config.label}
+                                    </span>
+                                    {item.scheduledFor && (
+                                      <span className="text-cyan-400">
+                                        {new Date(item.scheduledFor).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Quick Actions */}
+                                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {item.status === 'ready_for_review' && (
+                                    <>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleStatusChange(item.id, 'approved')
+                                        }}
+                                        className="p-1.5 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 transition-colors"
+                                        title="Approve"
+                                      >
+                                        <Check size={14} />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleStatusChange(item.id, 'changes_requested')
+                                        }}
+                                        className="p-1.5 bg-orange-500/20 text-orange-400 rounded hover:bg-orange-500/30 transition-colors"
+                                        title="Request Changes"
+                                      >
+                                        <Edit3 size={14} />
+                                      </button>
+                                    </>
+                                  )}
+                                  {item.status === 'approved' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleStatusChange(item.id, 'published')
+                                      }}
+                                      className="p-1.5 bg-purple-500/20 text-purple-400 rounded hover:bg-purple-500/30 transition-colors"
+                                      title="Publish"
+                                    >
+                                      <Rocket size={14} />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )
+                        })
+                      )}
+                    </div>
+                  </div>
                 )
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
         </motion.div>
       </main>
 
