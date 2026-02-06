@@ -216,11 +216,25 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
       <header className="border-b border-zinc-800 sticky top-0 bg-zinc-950/80 backdrop-blur-md z-40">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-3">
               <span className="text-3xl">🦞</span>
               <span className="text-xl font-bold text-white">Task Manager</span>
             </Link>
+            <nav className="flex items-center gap-4">
+              <Link 
+                href="/dashboard" 
+                className="text-cyan-400 font-medium"
+              >
+                Tasks
+              </Link>
+              <Link 
+                href="/activities" 
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                Activities
+              </Link>
+            </nav>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-zinc-400">
