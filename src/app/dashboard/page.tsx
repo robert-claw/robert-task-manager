@@ -525,6 +525,10 @@ function TaskDetailModal({
   const [editedFrontmatter, setEditedFrontmatter] = useState<Frontmatter>({})
   const [editedContent, setEditedContent] = useState('')
   
+  // Tweet editing state
+  const [editedTweetText, setEditedTweetText] = useState(task.content?.tweetText || '')
+  const [tweetSaved, setTweetSaved] = useState(false)
+  
   // Parse frontmatter on load
   const parsed = useMemo(() => {
     if (!task.content?.article) return { frontmatter: {}, content: '' }
@@ -631,6 +635,36 @@ function TaskDetailModal({
     }
   }
 
+  const handleSaveTweet = async () => {
+    setUpdating(true)
+    try {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: {
+            ...task.content,
+            tweetText: editedTweetText,
+          }
+        }),
+      })
+      if (res.ok) {
+        setTweetSaved(true)
+        setTimeout(() => setTweetSaved(false), 3000)
+        // Update local task state
+        setTask(prev => ({
+          ...prev,
+          content: { ...prev.content, tweetText: editedTweetText }
+        }))
+        onUpdate()
+      }
+    } catch (error) {
+      console.error('Failed to save tweet:', error)
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return
     
@@ -678,6 +712,7 @@ function TaskDetailModal({
   
   if (hasTweetContent) {
     tabs.unshift({ id: 'preview', label: '🐦 Preview' })
+    tabs.push({ id: 'edit', label: '✏️ Edit Tweet' })
   }
   
   if (hasBlogContent) {
@@ -1029,6 +1064,82 @@ function TaskDetailModal({
                   className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-cyan-600/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors ml-auto"
                 >
                   {updating ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'edit' && hasTweetContent && (
+            <div className="space-y-6">
+              {/* Tweet Editor */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-zinc-400">Edit Tweet</label>
+                  <span className={`text-sm ${editedTweetText.length > 280 ? 'text-red-400' : 'text-zinc-500'}`}>
+                    {editedTweetText.length}/280
+                  </span>
+                </div>
+                <textarea
+                  value={editedTweetText}
+                  onChange={(e) => setEditedTweetText(e.target.value)}
+                  className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-base focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  rows={6}
+                  placeholder="Write your tweet..."
+                />
+                {editedTweetText.length > 280 && (
+                  <p className="text-red-400 text-sm mt-2">⚠️ Tweet is too long! Maximum 280 characters.</p>
+                )}
+              </div>
+
+              {/* Tips */}
+              <div className="bg-zinc-800/50 rounded-xl p-4">
+                <h3 className="text-sm font-medium text-zinc-400 mb-3">💡 Tips</h3>
+                <ul className="text-sm text-zinc-500 space-y-2">
+                  <li>• Use <code className="bg-zinc-700 px-1 rounded">\\n</code> for line breaks</li>
+                  <li>• Add hashtags like <code className="bg-zinc-700 px-1 rounded">#AI</code> <code className="bg-zinc-700 px-1 rounded">#startup</code></li>
+                  <li>• Links are auto-shortened by X (count ~23 chars)</li>
+                  <li>• Emojis help engagement 🚀</li>
+                </ul>
+              </div>
+
+              {/* Live Preview */}
+              <div>
+                <h3 className="text-sm font-medium text-zinc-400 mb-2">Live Preview</h3>
+                <div className="bg-black border border-zinc-800 rounded-2xl p-4 max-w-xl">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold shrink-0">
+                      D
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-white text-sm">Dandelion Labs</span>
+                        <span className="text-zinc-500 text-sm">@dandelionlabsio</span>
+                      </div>
+                      <div className="mt-1 text-white whitespace-pre-wrap text-[15px]">
+                        {editedTweetText.split('\\n').join('\n') || 'Your tweet preview will appear here...'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex items-center justify-between">
+                {tweetSaved && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-green-400 text-sm"
+                  >
+                    ✓ Tweet saved!
+                  </motion.span>
+                )}
+                <button
+                  onClick={handleSaveTweet}
+                  disabled={updating || editedTweetText.length > 280}
+                  className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-cyan-600/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors ml-auto"
+                >
+                  {updating ? 'Saving...' : 'Save Tweet'}
                 </button>
               </div>
             </div>
