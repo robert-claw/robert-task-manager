@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { CalendarView } from '@/components/features/calendar/CalendarView'
+import { ToastProvider } from '@/components/ui/Toast'
+import { LoadingPage } from '@/components/ui/Loading'
 
 interface Project {
   id: string
@@ -12,7 +14,7 @@ interface Project {
   color: string
 }
 
-export default function CalendarPage() {
+function CalendarPageContent() {
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -34,11 +36,7 @@ export default function CalendarPage() {
   }, [])
   
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-cyan-400 text-xl">Loading...</div>
-      </div>
-    )
+    return <LoadingPage message="Loading calendar..." />
   }
   
   return (
@@ -59,5 +57,13 @@ export default function CalendarPage() {
         </motion.div>
       </main>
     </div>
+  )
+}
+
+export default function CalendarPage() {
+  return (
+    <ToastProvider>
+      <CalendarPageContent />
+    </ToastProvider>
   )
 }

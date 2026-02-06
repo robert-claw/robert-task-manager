@@ -4,6 +4,17 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
+import {
+  LayoutDashboard,
+  Calendar,
+  FileText,
+  FolderOpen,
+  Settings,
+  PanelLeftClose,
+  PanelLeft,
+  Sparkles,
+} from 'lucide-react'
+import { PlatformIcon } from '@/components/ui/Icons'
 
 interface Project {
   id: string
@@ -19,12 +30,36 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { href: '/calendar', label: 'Calendar', icon: '📅' },
-  { href: '/content', label: 'Content', icon: '📝' },
-  { href: '/projects', label: 'Projects', icon: '📁' },
-  { href: '/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/calendar', label: 'Calendar', icon: Calendar },
+  { href: '/content', label: 'Content', icon: FileText },
+  { href: '/projects', label: 'Projects', icon: FolderOpen },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ]
+
+// Map project icons to colors (simplified from emoji)
+const projectIconColors: Record<string, string> = {
+  '🌼': 'bg-amber-500',
+  '🦞': 'bg-cyan-500',
+  '🚀': 'bg-purple-500',
+  '💡': 'bg-yellow-500',
+  '🎯': 'bg-red-500',
+}
+
+function ProjectIcon({ icon, className = '' }: { icon: string; className?: string }) {
+  const bgColor = projectIconColors[icon] || 'bg-slate-600'
+  // Use first letter as fallback if we need to
+  const letter = icon.length > 2 ? icon[0].toUpperCase() : icon
+  
+  return (
+    <span 
+      className={`inline-flex items-center justify-center rounded-md text-sm ${className}`}
+      title={icon}
+    >
+      {letter}
+    </span>
+  )
+}
 
 export function Sidebar({ projects, selectedProject, onProjectChange }: SidebarProps) {
   const pathname = usePathname()
@@ -33,26 +68,32 @@ export function Sidebar({ projects, selectedProject, onProjectChange }: SidebarP
   return (
     <motion.aside
       initial={{ width: 256 }}
-      animate={{ width: isCollapsed ? 64 : 256 }}
+      animate={{ width: isCollapsed ? 72 : 256 }}
       className="h-screen bg-slate-900 border-r border-slate-800 flex flex-col"
     >
       {/* Header */}
       <div className="p-4 border-b border-slate-800">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <motion.h1 
+            <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-lg font-bold text-cyan-400"
+              className="flex items-center gap-2"
             >
-              🦞 Community Manager
-            </motion.h1>
+              <div className="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                <Sparkles size={18} className="text-cyan-400" />
+              </div>
+              <h1 className="text-lg font-bold text-cyan-400">
+                Community Manager
+              </h1>
+            </motion.div>
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {isCollapsed ? '→' : '←'}
+            {isCollapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
           </button>
         </div>
       </div>
@@ -71,7 +112,7 @@ export function Sidebar({ projects, selectedProject, onProjectChange }: SidebarP
             <option value="">All Projects</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
-                {project.icon} {project.name}
+                {project.name}
               </option>
             ))}
           </select>
@@ -83,17 +124,19 @@ export function Sidebar({ projects, selectedProject, onProjectChange }: SidebarP
         <ul className="space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href
+            const Icon = item.icon
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                     isActive 
                       ? 'bg-cyan-500/20 text-cyan-400' 
                       : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
+                  title={isCollapsed ? item.label : undefined}
                 >
-                  <span className="text-lg">{item.icon}</span>
+                  <Icon size={20} />
                   {!isCollapsed && (
                     <span className="text-sm font-medium">{item.label}</span>
                   )}
@@ -121,7 +164,7 @@ export function Sidebar({ projects, selectedProject, onProjectChange }: SidebarP
                       : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                   }`}
                 >
-                  <span>{project.icon}</span>
+                  <ProjectIcon icon={project.icon} />
                   <span className="truncate">{project.name}</span>
                 </button>
               </li>
@@ -133,7 +176,7 @@ export function Sidebar({ projects, selectedProject, onProjectChange }: SidebarP
       {/* User */}
       <div className="p-4 border-t border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-medium">
             L
           </div>
           {!isCollapsed && (
