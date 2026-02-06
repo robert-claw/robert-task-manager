@@ -20,7 +20,12 @@
 
 ### Repos
 - `robert-claw/blog` — Next.js 16 blog with i18n
-- `robert-claw/robert-task-manager` — Collaboration task system
+- `robert-claw/robert-task-manager` — Collaboration task system (refactored 2026-02-06)
+  - Now uses proper architecture: src/ folder, components/ui, components/layout, components/features
+  - i18n with next-intl (EN/ES/DE), messages split into modules
+  - SEO with JSON-LD WebApplication schema
+  - Futuristic UI with Framer Motion
+- Access to `dandelionlabs-io/corporate` for blog posts
 
 ### Credentials (stored securely, not in files)
 - Task manager auth: leon / clawsome2026

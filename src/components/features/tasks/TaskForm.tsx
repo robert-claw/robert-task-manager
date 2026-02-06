@@ -2,158 +2,168 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { motion } from 'framer-motion';
-import { TaskType, TaskPriority, Assignee, NewTaskForm } from '@/lib/types';
-import { priorityStyles } from '@/lib/utils';
-import { Modal, Button, Input, Textarea } from '@/components/ui';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Task, TaskType, TaskPriority, Assignee } from '@/lib/types';
 
 interface TaskFormProps {
-  isOpen: boolean;
+  defaultAssignee: Assignee;
+  onSubmit: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onClose: () => void;
-  onSubmit: (task: NewTaskForm) => void;
 }
 
-export function TaskForm({ isOpen, onClose, onSubmit }: TaskFormProps) {
+const typeOptions: { value: TaskType; label: string; icon: string }[] = [
+  { value: 'task', label: 'TASK', icon: '📋' },
+  { value: 'content', label: 'CONTENT', icon: '📝' },
+  { value: 'blog', label: 'BLOG', icon: '📰' },
+];
+
+const priorityOptions: { value: TaskPriority; label: string; color: string }[] = [
+  { value: 'low', label: 'LOW', color: 'bg-slate-600' },
+  { value: 'medium', label: 'MEDIUM', color: 'bg-blue-600' },
+  { value: 'high', label: 'HIGH', color: 'bg-orange-600' },
+  { value: 'urgent', label: 'URGENT', color: 'bg-red-600' },
+];
+
+export function TaskForm({ defaultAssignee, onSubmit, onClose }: TaskFormProps) {
   const t = useTranslations('tasks');
-  const [form, setForm] = useState<NewTaskForm>({
+  const [form, setForm] = useState({
     title: '',
     description: '',
-    priority: 'medium',
-    type: 'task',
-    assignedTo: 'leon',
+    priority: 'medium' as TaskPriority,
+    type: 'task' as TaskType,
+    assignedTo: defaultAssignee,
   });
 
   const handleSubmit = () => {
     if (!form.title.trim()) return;
-    onSubmit(form);
-    setForm({
-      title: '',
-      description: '',
-      priority: 'medium',
-      type: 'task',
-      assignedTo: 'leon',
+    onSubmit({
+      ...form,
+      status: 'pending',
+      createdBy: defaultAssignee === 'leon' ? 'robert' : 'leon',
     });
-    onClose();
-  };
-
-  const assigneeOptions: { value: Assignee; label: string; icon: string }[] = [
-    { value: 'leon', label: 'LEON', icon: '👤' },
-    { value: 'robert', label: 'ROBERT', icon: '🦞' },
-  ];
-
-  const typeOptions: { value: TaskType; label: string; icon: string }[] = [
-    { value: 'task', label: 'TASK', icon: '📋' },
-    { value: 'content', label: 'CONTENT', icon: '📝' },
-    { value: 'blog', label: 'BLOG', icon: '📰' },
-  ];
-
-  const priorityOptions: TaskPriority[] = ['low', 'medium', 'high', 'urgent'];
-
-  const getAssigneeStyle = (value: Assignee, isSelected: boolean) => {
-    if (!isSelected) return 'py-2 rounded-lg text-sm font-mono bg-slate-800 border-2 border-slate-700 text-slate-400 hover:border-slate-600';
-    return value === 'leon' 
-      ? 'py-2 rounded-lg text-sm font-mono bg-orange-500/20 border-2 border-orange-500 text-orange-400'
-      : 'py-2 rounded-lg text-sm font-mono bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400';
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={t('newTask')}
-      footer={
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={onClose} className="flex-1">
-            {t('cancel')}
-          </Button>
-          <Button 
-            variant="primary" 
-            onClick={handleSubmit} 
-            disabled={!form.title.trim()}
-            className="flex-1"
-          >
-            {t('create')}
-          </Button>
-        </div>
-      }
-    >
-      <div className="space-y-4">
-        {/* Assignee selection */}
-        <div className="grid grid-cols-2 gap-2">
-          {assigneeOptions.map(option => (
-            <motion.button
-              key={option.value}
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setForm({ ...form, assignedTo: option.value })}
-              className={getAssigneeStyle(option.value, form.assignedTo === option.value)}
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-cyan-400">{t('newTask')}</h2>
+            <button onClick={onClose} className="text-slate-400 hover:text-white">✕</button>
+          </div>
+
+          {/* Body */}
+          <div className="p-4 space-y-4">
+            {/* Assignee */}
+            <div className="grid grid-cols-2 gap-2">
+              {(['leon', 'robert'] as Assignee[]).map((assignee) => (
+                <button
+                  key={assignee}
+                  onClick={() => setForm({ ...form, assignedTo: assignee })}
+                  className={`
+                    py-2 rounded-lg text-sm font-mono transition
+                    ${form.assignedTo === assignee
+                      ? assignee === 'leon'
+                        ? 'bg-orange-500/20 border-2 border-orange-500 text-orange-400'
+                        : 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400'
+                      : 'bg-slate-800 border-2 border-slate-700 text-slate-400'
+                    }
+                  `}
+                >
+                  {assignee === 'leon' ? '👤 LEON' : '🦞 ROBERT'}
+                </button>
+              ))}
+            </div>
+
+            {/* Type */}
+            <div className="grid grid-cols-3 gap-2">
+              {typeOptions.map((type) => (
+                <button
+                  key={type.value}
+                  onClick={() => setForm({ ...form, type: type.value })}
+                  className={`
+                    py-2 rounded-lg text-xs font-mono transition
+                    ${form.type === type.value
+                      ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400'
+                      : 'bg-slate-800 border border-slate-700 text-slate-400'
+                    }
+                  `}
+                >
+                  {type.icon} {type.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Title */}
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder={t('titlePlaceholder')}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+            />
+
+            {/* Description */}
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder={t('descriptionPlaceholder')}
+              rows={3}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 resize-none"
+            />
+
+            {/* Priority */}
+            <div className="grid grid-cols-4 gap-2">
+              {priorityOptions.map((priority) => (
+                <button
+                  key={priority.value}
+                  onClick={() => setForm({ ...form, priority: priority.value })}
+                  className={`
+                    py-1.5 rounded text-[10px] font-mono transition
+                    ${form.priority === priority.value
+                      ? `${priority.color} text-white`
+                      : 'bg-slate-800 border border-slate-700 text-slate-500'
+                    }
+                  `}
+                >
+                  {priority.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-slate-700 flex gap-2">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 transition text-sm"
             >
-              {option.icon} {option.label}
-            </motion.button>
-          ))}
-        </div>
-
-        {/* Type selection */}
-        <div className="grid grid-cols-3 gap-2">
-          {typeOptions.map(option => (
-            <motion.button
-              key={option.value}
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setForm({ ...form, type: option.value })}
-              className={`
-                py-2 rounded-lg text-xs font-mono transition
-                ${form.type === option.value 
-                  ? 'bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400'
-                  : 'bg-slate-800 border-2 border-slate-700 text-slate-400 hover:border-slate-600'
-                }
-              `}
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!form.title.trim()}
+              className="flex-1 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
             >
-              {option.icon} {option.label}
-            </motion.button>
-          ))}
-        </div>
-
-        {/* Title */}
-        <Input
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          placeholder={t('titlePlaceholder')}
-        />
-
-        {/* Description */}
-        <Textarea
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          placeholder={t('descriptionPlaceholder')}
-          className="h-20"
-        />
-
-        {/* Priority selection */}
-        <div className="grid grid-cols-4 gap-1">
-          {priorityOptions.map(p => (
-            <motion.button
-              key={p}
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setForm({ ...form, priority: p })}
-              className={`
-                py-1.5 rounded text-[10px] font-mono transition
-                ${form.priority === p
-                  ? priorityStyles[p]
-                  : 'bg-slate-800 border border-slate-700 text-slate-500'
-                }
-              `}
-            >
-              {p.toUpperCase()}
-            </motion.button>
-          ))}
-        </div>
-      </div>
-    </Modal>
+              {t('createTask')}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
