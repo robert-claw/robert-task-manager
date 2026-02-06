@@ -12,7 +12,9 @@ export interface Task {
   priority: TaskPriority;
   createdAt: string;
   updatedAt: string;
-  createdBy: 'robert' | 'user';
+  createdBy: 'robert' | 'leon';
+  assignedTo: 'robert' | 'leon';
+  result?: string;
   tags?: string[];
 }
 
