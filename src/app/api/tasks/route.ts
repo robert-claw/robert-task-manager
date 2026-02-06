@@ -32,8 +32,10 @@ export async function POST(request: NextRequest) {
       title: data.title,
       description: data.description || '',
       priority: data.priority || 'medium',
+      type: data.type || 'general',
       assignee: data.assignee,
       createdBy: data.createdBy,
+      content: data.content,
     })
 
     return NextResponse.json({ task }, { status: 201 })

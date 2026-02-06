@@ -68,6 +68,26 @@ curl -X POST "https://api.together.xyz/v1/images/generations" \
 
 ---
 
+## X (Twitter) - @dandelionlabsio
+
+**Account:** dandelionlabsio
+**Workflow:** Create tweet → Review → Approve → Schedule/Post
+
+```bash
+# Post a tweet using OAuth 1.0a
+curl -X POST "https://api.twitter.com/2/tweets" \
+  -H "Authorization: OAuth ..." \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Your tweet here"}'
+```
+
+**Content Strategy:**
+- 14 tweets drafted in advance (2 weeks)
+- Daily posting once batch is approved
+- Mix of: insights, tips, blog announcements, engagement
+
+---
+
 ## My Infrastructure
 
 ### Server

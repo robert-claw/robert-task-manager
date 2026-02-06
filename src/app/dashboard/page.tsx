@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-type TaskType = 'general' | 'blog' | 'code' | 'review' | 'research'
+type TaskType = 'general' | 'blog' | 'code' | 'review' | 'research' | 'tweet'
 
 interface Comment {
   id: number
@@ -39,6 +39,10 @@ interface Task {
     files?: string[]
     sources?: string[]
     findings?: string
+    tweetText?: string
+    scheduledFor?: string
+    threadParts?: string[]
+    mediaUrl?: string
   }
 }
 
@@ -118,6 +122,7 @@ const TYPE_ICONS: Record<TaskType, string> = {
   code: '💻',
   review: '👁️',
   research: '🔍',
+  tweet: '🐦',
 }
 
 const TYPE_LABELS: Record<TaskType, string> = {
@@ -126,6 +131,7 @@ const TYPE_LABELS: Record<TaskType, string> = {
   code: 'Code',
   review: 'Review',
   research: 'Research',
+  tweet: 'Tweet',
 }
 
 const FRONTMATTER_LABELS: Record<string, string> = {
@@ -263,7 +269,7 @@ export default function DashboardPage() {
             
             <span className="text-zinc-600 mx-2">|</span>
             
-            {(['all', 'blog', 'code', 'review', 'research', 'general'] as const).map((t) => (
+            {(['all', 'tweet', 'blog', 'code', 'review', 'research', 'general'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTypeFilter(t)}
@@ -928,6 +934,7 @@ function CreateTaskModal({
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
                 <option value="general">📋 General</option>
+                <option value="tweet">🐦 Tweet</option>
                 <option value="blog">📝 Blog Post</option>
                 <option value="code">💻 Code</option>
                 <option value="review">👁️ Review</option>

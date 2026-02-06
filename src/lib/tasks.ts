@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-export type TaskType = 'general' | 'blog' | 'code' | 'review' | 'research'
+export type TaskType = 'general' | 'blog' | 'code' | 'review' | 'research' | 'tweet'
 
 export interface Comment {
   id: number
@@ -40,6 +40,12 @@ export interface Task {
     // For research tasks
     sources?: string[]
     findings?: string
+    
+    // For tweets
+    tweetText?: string
+    scheduledFor?: string
+    threadParts?: string[]
+    mediaUrl?: string
   }
 }
 
