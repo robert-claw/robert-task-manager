@@ -1,53 +1,103 @@
-# Robert Task Manager
+# Community Manager
 
-Task and communication manager for Robert (AI) + User collaboration.
+Multi-project content management system for managing social media content, campaigns, and analytics across platforms.
 
 ## Features
 
-- ✅ Task creation with priority levels (urgent, high, medium, low)
-- ✅ Status tracking (pending, in progress, done, rejected)
-- ✅ Sorted by priority and date
-- ✅ Clean, dark-themed UI
-- ✅ Simple token-based auth
-- ✅ Real-time updates
+- **Multi-Project Support** - Manage multiple brands/projects in one place
+- **Content Calendar** - Visual calendar for scheduling posts
+- **Funnel System** - TOFU/MOFU/BOFU content strategy mapping
+- **Templates** - Reusable content templates
+- **Analytics** - Track performance across platforms
+- **Media Upload** - Image/video support via Hetzner Object Storage
+- **Ideas Board** - Capture and organize content ideas
+- **Campaigns** - Group related content into campaigns
 
-## Setup
+## Projects
 
-1. Install dependencies:
-```bash
-npm install
-```
+### Active Projects
+- **Dandelion Labs** (Business) - AI agency, MVP development
+- **Leon Acosta** (Personal) - Biohacking, consciousness, financial sovereignty
+- **Robert Claw** (Personal) - AI companion journey, building in public
 
-2. Configure auth token in `.env.local`:
-```
-AUTH_TOKEN=your-secret-token-here
-```
+## Tech Stack
 
-3. Run development server:
-```bash
-npm run dev
-```
+- Next.js 15 (App Router)
+- TypeScript
+- Tailwind CSS
+- Framer Motion (animations)
+- Prisma (planned)
+- Hetzner S3 Object Storage
 
-4. Access at http://localhost:3030
-
-## Security
-
-- Token-based authentication (set in `.env.local`)
-- All API routes require valid auth token
-- Tasks stored in local JSON file
-
-## Production
+## Development
 
 ```bash
-npm run build
-npm start
+npm run dev    # Start development server
+npm run build  # Build for production
+npm run lint   # Run ESLint
 ```
 
-## Usage
+## Deployment
 
-- **Create tasks**: Click "+ New Task"
-- **Update status**: Click status buttons on each task
-- **Delete tasks**: Click 🗑️ icon
-- **Priority sorting**: Tasks automatically sorted by priority
+Running on PM2 as `robert-task-manager`:
+- Port: 3030
+- URL: http://task-manager.robert-claw.com
 
-Tasks are sorted: urgent → high → medium → low, then by creation date.
+```bash
+pm2 restart robert-task-manager
+pm2 logs robert-task-manager
+```
+
+## Structure
+
+```
+src/
+├── app/              # Next.js app routes
+│   ├── dashboard/    # Main dashboard
+│   ├── calendar/     # Calendar view
+│   ├── campaigns/    # Campaign management
+│   ├── ideas/        # Ideas board
+│   ├── templates/    # Template library
+│   ├── analytics/    # Analytics dashboard
+│   └── api/          # API routes
+├── components/
+│   ├── layout/       # Layout components (Sidebar, etc.)
+│   ├── features/     # Feature-specific components
+│   └── ui/           # Reusable UI components
+├── lib/              # Utilities and types
+└── docs/             # Documentation
+    └── projects/     # Project-specific documentation
+```
+
+## Content Strategy
+
+See `/docs/projects/{project-name}/` for project-specific strategies:
+- Content pillars
+- Funnel strategies (TOFU/MOFU/BOFU)
+- Platform-specific guidelines
+- Target audiences
+
+## API Routes
+
+- `GET /api/projects` - List all projects
+- `GET /api/content` - List all content
+- `POST /api/content` - Create new content
+- `PUT /api/content/[id]` - Update content
+- `DELETE /api/content/[id]` - Delete content
+- `POST /api/upload` - Upload media files
+
+## Context System
+
+Uses context-based file loading for token efficiency:
+
+```bash
+node skills/context-router/load-context.js {context-name}
+```
+
+Available contexts: community-manager, infrastructure, blog, dandelion, scout, liberture, git, memory, self, heartbeat
+
+## Contributing
+
+Built and maintained by Robert Claw 🦞
+
+Last updated: February 8, 2026
