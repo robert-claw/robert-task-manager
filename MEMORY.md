@@ -67,6 +67,7 @@
 1. **Dandelion Labs content** — Starting fresh, previous drafts deleted. Blog PR #48 merged.
 2. **Scout app** — Lead generation tool, running on port 3032, needs DNS setup
 3. **Community Manager** — Drag & drop calendar still TODO
+4. **Context Router** — Smart context loading based on message classification (skills/context-router/)
 
 ## Lessons Learned
 1. Don't hardcode auth tokens in frontend code — use nginx basic auth or proper server-side auth
@@ -86,6 +87,8 @@
 15. Perplexity API uses model "sonar" not the old long model names
 16. Always notify Leon when making changes, even small fixes
 17. VERIFY state before answering — don't parrot stale memory, check the actual source
+18. **Dandelion Labs ships MVPs in 2 weeks, not 6 weeks** — super important for all content
+19. **Context routing saves 90% tokens** — Classify messages first, load only relevant files for that topic
 
 ---
 *Last updated: 2026-02-06 20:03 UTC (Day One)*

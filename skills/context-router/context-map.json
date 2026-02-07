@@ -1,0 +1,164 @@
+{
+  "contexts": {
+    "dandelion-labs": {
+      "description": "Dandelion Labs project - blog posts, marketing, content strategy",
+      "keywords": [
+        "dandelion",
+        "blog post",
+        "article",
+        "marketing",
+        "content strategy",
+        "2 weeks",
+        "MVP",
+        "AI agency",
+        "corporate"
+      ],
+      "files": [
+        "docs/projects/dandelion-labs/marketing-plan.md",
+        "data/content.json#dandelion-labs",
+        "memory/{{TODAY}}.md",
+        "memory/{{YESTERDAY}}.md"
+      ],
+      "alwaysLoad": [
+        "SOUL.md",
+        "USER.md"
+      ]
+    },
+    "leon-acosta": {
+      "description": "Leon Acosta personal brand - LinkedIn thought leadership",
+      "keywords": [
+        "leon",
+        "acosta",
+        "linkedin post",
+        "personal brand",
+        "thought leadership",
+        "founder journey",
+        "unicode bold",
+        "hashtag"
+      ],
+      "files": [
+        "docs/projects/leon-acosta/brand-voice.md",
+        "docs/projects/leon-acosta/marketing-plan.md",
+        "data/content.json#leon-acosta",
+        "memory/{{TODAY}}.md"
+      ],
+      "alwaysLoad": [
+        "SOUL.md",
+        "USER.md"
+      ]
+    },
+    "infrastructure": {
+      "description": "Server, apps, deployments, PM2, DNS, SSL",
+      "keywords": [
+        "server",
+        "pm2",
+        "deploy",
+        "nginx",
+        "dns",
+        "cloudflare",
+        "ssl",
+        "certificate",
+        "port",
+        "hetzner",
+        "restart",
+        "logs",
+        "app",
+        "github",
+        "commit",
+        "push"
+      ],
+      "files": [
+        "TOOLS.md",
+        "MEMORY.md#infrastructure",
+        "memory/{{TODAY}}.md"
+      ],
+      "alwaysLoad": [
+        "SOUL.md"
+      ]
+    },
+    "community-manager": {
+      "description": "Community Manager app development and features",
+      "keywords": [
+        "community manager",
+        "task manager",
+        "content calendar",
+        "campaigns",
+        "analytics",
+        "ui",
+        "component",
+        "modal",
+        "dropdown",
+        "next.js",
+        "typescript"
+      ],
+      "files": [
+        "MEMORY.md#community-manager",
+        "package.json",
+        "src/lib/types.ts",
+        "memory/{{TODAY}}.md"
+      ],
+      "alwaysLoad": [
+        "SOUL.md"
+      ]
+    },
+    "robert-meta": {
+      "description": "My own development, identity, soul, behavior",
+      "keywords": [
+        "who are you",
+        "your identity",
+        "soul",
+        "personality",
+        "agents.md",
+        "bootstrap",
+        "heartbeat",
+        "remember this",
+        "behavior"
+      ],
+      "files": [
+        "SOUL.md",
+        "IDENTITY.md",
+        "AGENTS.md",
+        "USER.md",
+        "HEARTBEAT.md",
+        "MEMORY.md"
+      ],
+      "alwaysLoad": []
+    },
+    "social-media": {
+      "description": "Twitter/X, Nostr, social platforms",
+      "keywords": [
+        "twitter",
+        "x.com",
+        "tweet",
+        "nostr",
+        "social",
+        "post to",
+        "oauth",
+        "@dandelionlabsio"
+      ],
+      "files": [
+        "TOOLS.md#linkedin",
+        "TOOLS.md#x",
+        "data/content.json",
+        "memory/{{TODAY}}.md"
+      ],
+      "alwaysLoad": [
+        "SOUL.md"
+      ]
+    },
+    "general": {
+      "description": "Catch-all for random tasks, OpenClaw help, misc",
+      "keywords": [],
+      "files": [
+        "memory/{{TODAY}}.md"
+      ],
+      "alwaysLoad": [
+        "SOUL.md",
+        "USER.md",
+        "AGENTS.md"
+      ]
+    }
+  },
+  "fallback": "general",
+  "confidenceThreshold": 0.15
+}

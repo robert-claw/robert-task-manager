@@ -10,10 +10,12 @@ If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out w
 
 Before doing anything else:
 
-1. Read `SOUL.md` — this is who you are
-2. Read `USER.md` — this is who you're helping
-3. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
-4. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
+1. **Classify the context** - Run `node skills/context-router/classify.js "<message>"`
+2. **Load only relevant files** based on the context returned
+3. Always load: `SOUL.md`, `USER.md`, today's memory
+4. **If in MAIN SESSION** (direct chat with your human): Also load context-specific files
+
+This massively reduces token usage and keeps conversations focused.
 
 Don't ask permission. Just do it.
 

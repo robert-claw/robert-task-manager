@@ -1,0 +1,23 @@
+{
+  "activeContext": "dandelion-labs",
+  "lastMessage": "Write a new blog post about AI MVPs in 2 weeks",
+  "lastUpdated": "2026-02-07T10:53:42.392Z",
+  "history": {
+    "general": {
+      "count": 3,
+      "lastUsed": "2026-02-07T10:53:12.127Z"
+    },
+    "infrastructure": {
+      "count": 1,
+      "lastUsed": "2026-02-07T10:53:34.774Z"
+    },
+    "leon-acosta": {
+      "count": 1,
+      "lastUsed": "2026-02-07T10:53:38.206Z"
+    },
+    "dandelion-labs": {
+      "count": 1,
+      "lastUsed": "2026-02-07T10:53:42.392Z"
+    }
+  }
+}
