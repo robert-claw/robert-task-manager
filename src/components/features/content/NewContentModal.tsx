@@ -339,19 +339,19 @@ export function NewContentModal({ isOpen, onClose, onSubmit, projects }: NewCont
                 </div>
               </div>
 
-              {/* Image Upload */}
+              {/* Media Upload (Images & Videos) */}
               <div>
                 <label className="block text-sm font-medium text-slate-400 mb-2">
                   <span className="flex items-center gap-2">
                     <ImageIcon size={14} />
-                    Images (Optional)
+                    Media (Optional)
                   </span>
                 </label>
                 
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -361,11 +361,19 @@ export function NewContentModal({ isOpen, onClose, onSubmit, projects }: NewCont
                     <div className="grid grid-cols-3 gap-3">
                       {formData.media.map((media) => (
                         <div key={media.id} className="relative group">
-                          <img
-                            src={media.url}
-                            alt={media.filename}
-                            className="w-full h-32 object-cover rounded-lg border border-slate-700"
-                          />
+                          {media.type === 'video' ? (
+                            <video
+                              src={media.url}
+                              className="w-full h-32 object-cover rounded-lg border border-slate-700"
+                              controls
+                            />
+                          ) : (
+                            <img
+                              src={media.url}
+                              alt={media.filename}
+                              className="w-full h-32 object-cover rounded-lg border border-slate-700"
+                            />
+                          )}
                           <button
                             type="button"
                             onClick={() => handleRemoveMedia(media.id)}
@@ -392,8 +400,8 @@ export function NewContentModal({ isOpen, onClose, onSubmit, projects }: NewCont
                     ) : (
                       <>
                         <Upload size={24} />
-                        <span className="text-sm font-medium">Click to upload image</span>
-                        <span className="text-xs">PNG, JPG, GIF, WebP (max 10MB)</span>
+                        <span className="text-sm font-medium">Click to upload image or video</span>
+                        <span className="text-xs">Images: PNG, JPG, GIF, WebP (max 10MB) | Videos: MP4, WebM, MOV (max 100MB)</span>
                       </>
                     )}
                   </button>
