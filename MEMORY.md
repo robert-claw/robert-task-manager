@@ -37,6 +37,7 @@ Personal roadmap documented in `ROADMAP.md`.
 | robert-claw.com | My blog | 3031 | robert-blog |
 | task-manager.robert-claw.com | Community Manager | 3030 | community-manager |
 | scout.robert-claw.com (pending DNS) | Lead Scout | 3032 | scout |
+| liberture.com | Leon's biohacking platform | 3033 | liberture |
 
 ### Repos
 - `robert-claw/blog` — Next.js 16 blog with i18n
@@ -46,6 +47,11 @@ Personal roadmap documented in `ROADMAP.md`.
   - Content grouped by platform (LinkedIn, Twitter, Blog)
   - lucide-react icons (no emojis)
 - `robert-claw/scout` — Lead generation crawler (pending GitHub push)
+- `leonacostaok/liberture` — Biohacking platform (Leon's personal project)
+  - Next.js 16 with Prisma + SQLite
+  - 6 pillars: Cognition, Recovery, Fueling, Mental, Physicality, Finance
+  - Marketplace, Knowledge base, Dashboard
+  - Real backend with database (20+ items seeded)
 - Access to `dandelionlabs-io/corporate` for blog posts
 
 ### Object Storage
