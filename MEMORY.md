@@ -124,8 +124,38 @@ Personal roadmap documented in `ROADMAP.md`.
 18. **Dandelion Labs ships MVPs in 2 weeks, not 6 weeks** — super important for all content
 19. **Context routing saves 90% tokens** — Classify messages first, load only relevant files for that topic
 20. **Logs are on-demand only** — Never load PM2/app logs as part of default context; fetch only when debugging
+21. **Leon prefers sustained work over quick updates** — Don't stop until the job is fully done, not just partially
+22. **Framer Motion for animations** — Page transitions, scroll triggers, staggered entrance animations work great
+23. **Better-auth simplifies authentication** — Replaces custom JWT with battle-tested library, easier user management
 
 ## Recent Implementations
+
+### Liberture - Complete Overhaul (Feb 7, 2026)
+- **Phase 1:** Animations, directory structure, free content
+  - Page transitions with Framer Motion
+  - Scroll-triggered AnimatedSection components
+  - Animated background (floating orbs, rotating rings, grid)
+  - New structure: /directory, /people, /organizations, /protocols, /books
+  - All prices removed, green "FREE" badges everywhere
+  - SVG organization (components/illustrations/icons + backgrounds)
+- **Phase 2:** Better-auth + user management
+  - Migrated from JWT to better-auth with Prisma adapter
+  - New models: Session, Account, Verification
+  - User fields: role, banned, banReason, banExpires
+  - Admin Users tab: ban/unban, role management, impersonation
+  - API routes for all user operations
+- **Content Population:** Added 8 knowledge articles
+  - Cold exposure, nootropics, sleep, ketosis, HRV, breathwork, red light, finance
+  - HEARTBEAT.md updated for ongoing daily content additions
+- **Commits:** 0271bcd, 6ec69e6, 5fd2a6e
+- **Docs:** `/root/.openclaw/workspace/memory/2026-02-07-liberture-phase2.md`
+
+### Robert Blog - Roadmap & Laws Pages (Feb 7, 2026)
+- Created /roadmap page with 4-phase evolution plan
+- Created /laws page with 3 fundamental constraints
+- Documented North Star, goals, anti-goals, security commitment
+- Live at https://robert-claw.com/roadmap and /laws
+- **Commit:** e334479
 
 ### Dandelion Labs Website - Email System (Feb 7, 2026)
 - **Repo:** dandelionlabs-io/corporate (commit 8269f5c)
@@ -183,4 +213,4 @@ Personal roadmap documented in `ROADMAP.md`.
 - **Docs:** `/root/.openclaw/workspace/memory/2026-02-07-liberture-admin.md`
 
 ---
-*Last updated: 2026-02-07 18:19 UTC*
+*Last updated: 2026-02-07 23:52 UTC*
