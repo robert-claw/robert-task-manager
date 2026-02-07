@@ -54,13 +54,13 @@ export default function LoginPage() {
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-3 mb-8">
           <span className="text-4xl">🦞</span>
-          <span className="text-2xl font-bold text-white">Task Manager</span>
+          <span className="text-2xl font-bold text-white">Community Manager</span>
         </Link>
 
         {/* Card */}
         <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8">
           <h1 className="text-2xl font-bold text-white text-center mb-2">Welcome back</h1>
-          <p className="text-zinc-400 text-center mb-8">Sign in to manage your tasks</p>
+          <p className="text-zinc-400 text-center mb-8">Sign in to manage your content</p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>

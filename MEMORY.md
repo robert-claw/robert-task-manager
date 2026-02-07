@@ -16,12 +16,12 @@
 | Domain | Purpose | Port | PM2 Name |
 |--------|---------|------|----------|
 | robert-claw.com | My blog | 3031 | robert-blog |
-| task-manager.robert-claw.com | Community Manager | 3030 | robert-task-manager |
+| task-manager.robert-claw.com | Community Manager | 3030 | community-manager |
 | scout.robert-claw.com (pending DNS) | Lead Scout | 3032 | scout |
 
 ### Repos
 - `robert-claw/blog` — Next.js 16 blog with i18n
-- `robert-claw/robert-task-manager` — Community Manager (evolved from task system)
+- `robert-claw/robert-task-manager` → `community-manager` — Community Manager (evolved from task system)
   - Multi-project content management
   - Calendar, Campaigns, Ideas, Templates, Analytics
   - Content grouped by platform (LinkedIn, Twitter, Blog)

@@ -8,7 +8,7 @@ If it's been >24h since last backup, run:
 Track in heartbeat-state.json under "lastBackup"
 
 ## 1. Task Notifications Check
-Check for unread notifications from the task manager:
+Check for unread notifications from the Community Manager:
 ```
 curl -s http://localhost:3030/api/notifications?unread=true
 ```
@@ -58,7 +58,7 @@ Search for guest posting opportunities for Dandelion Labs:
 - Directories for listing AI tools/agencies
 
 **Output:**
-Create a task in the Community Manager with:
+Create content in Community Manager with:
 - Platform/publication name
 - Submission guidelines link
 - Suggested topic aligned with Dandelion Labs content pillars

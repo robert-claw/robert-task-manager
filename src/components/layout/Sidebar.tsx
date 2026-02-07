@@ -40,6 +40,7 @@ const navItems = [
   { href: '/campaigns', label: 'Campaigns', icon: Target },
   { href: '/ideas', label: 'Ideas', icon: Lightbulb },
   { href: '/templates', label: 'Library', icon: BookOpen },
+  { href: '/docs', label: 'Docs', icon: FileText },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/projects', label: 'Projects', icon: FolderOpen },
   { href: '/settings', label: 'Settings', icon: Settings },
