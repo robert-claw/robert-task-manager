@@ -41,6 +41,14 @@ Add whatever helps you do your job. This is your cheat sheet.
 
 ---
 
+## Search Fallbacks
+
+When Brave Search hits rate limits:
+1. **Perplexity API** - Use model "sonar" for search queries
+2. **Direct web browsing** - Use browser tool to manually search
+
+---
+
 ## Together.ai Models
 
 ### FLUX.1-schnell (Image Generation)
