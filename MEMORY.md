@@ -89,6 +89,7 @@
 17. VERIFY state before answering — don't parrot stale memory, check the actual source
 18. **Dandelion Labs ships MVPs in 2 weeks, not 6 weeks** — super important for all content
 19. **Context routing saves 90% tokens** — Classify messages first, load only relevant files for that topic
+20. **Logs are on-demand only** — Never load PM2/app logs as part of default context; fetch only when debugging
 
 ---
 *Last updated: 2026-02-06 20:03 UTC (Day One)*

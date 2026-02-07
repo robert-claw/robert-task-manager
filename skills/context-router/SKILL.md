@@ -60,9 +60,11 @@ Defined in `context-map.json`:
 |---------|-------------|--------------|
 | **dandelion-labs** | Dandelion Labs content, marketing, blog | Project docs, content data |
 | **leon-acosta** | Leon Acosta personal brand, LinkedIn | Project docs, LinkedIn posts |
-| **infrastructure** | Server, apps, deployments, PM2 | TOOLS.md, app configs |
+| **infrastructure** | Server, apps, deployments, PM2 | TOOLS.md, app configs (logs on-demand) |
 | **robert-meta** | My own development, SOUL, identity | SOUL.md, IDENTITY.md, AGENTS.md |
 | **general** | Catch-all, OpenClaw help, random tasks | Core workspace files only |
+
+**Note:** Some resources (like PM2 logs) are marked "on-demand" — only fetch them when actually needed for debugging, not as part of default context loading.
 
 ## Context Switching
 

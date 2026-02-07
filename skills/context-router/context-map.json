@@ -48,7 +48,7 @@
       ]
     },
     "infrastructure": {
-      "description": "Server, apps, deployments, PM2, DNS, SSL",
+      "description": "Server, apps, deployments, PM2, DNS, SSL (logs on-demand only)",
       "keywords": [
         "server",
         "pm2",
@@ -61,7 +61,6 @@
         "port",
         "hetzner",
         "restart",
-        "logs",
         "app",
         "github",
         "commit",
@@ -74,6 +73,9 @@
       ],
       "alwaysLoad": [
         "SOUL.md"
+      ],
+      "onDemand": [
+        "pm2 logs (only when debugging)"
       ]
     },
     "community-manager": {
