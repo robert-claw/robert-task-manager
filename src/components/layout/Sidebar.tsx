@@ -17,6 +17,7 @@ import {
   BarChart3,
   BookOpen,
   Lightbulb,
+  GitMerge,
 } from 'lucide-react'
 import { ProjectDropdown } from '@/components/ui/Dropdown'
 
@@ -39,6 +40,7 @@ const navItems = [
   { href: '/content', label: 'Content', icon: FileText },
   { href: '/calendar', label: 'Calendar', icon: Calendar },
   { href: '/campaigns', label: 'Campaigns', icon: Target },
+  { href: '/funnels', label: 'Funnels', icon: GitMerge },
   { href: '/ideas', label: 'Ideas', icon: Lightbulb },
   { href: '/templates', label: 'Library', icon: BookOpen },
   { href: '/docs', label: 'Docs', icon: FileText },

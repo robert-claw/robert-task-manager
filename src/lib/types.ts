@@ -79,6 +79,21 @@ export interface ProjectSettings {
   autoSchedule: boolean
 }
 
+// Funnel types
+export type FunnelStage = 'TOFU' | 'MOFU' | 'BOFU'
+export type LinkType = 'leads_to' | 'supports' | 'amplifies'
+
+export interface ContentLink {
+  contentId: string
+  linkType: LinkType
+}
+
+export interface ConversionGoal {
+  metric: string
+  target?: number
+  description: string
+}
+
 // Content item (replaces Task for content)
 export interface ContentItem {
   id: string
@@ -96,6 +111,12 @@ export interface ContentItem {
   createdBy: string
   assignee: string
   comments: Comment[]
+  // Funnel strategy fields
+  funnelStage?: FunnelStage
+  strategyType?: string  // e.g., "Hot Take", "Case Study", "Educational Framework"
+  conversionGoals?: ConversionGoal[]
+  linkedContent?: ContentLink[]
+  // Metadata
   createdAt: string
   updatedAt: string
 }
