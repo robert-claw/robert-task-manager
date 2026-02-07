@@ -1,0 +1,140 @@
+{
+  "contexts": {
+    "community-manager": {
+      "description": "Next.js Community Manager app (task-manager.robert-claw.com)",
+      "files": [
+        "package.json",
+        "src/app/layout.tsx",
+        "src/lib/types.ts",
+        "src/lib/funnel-strategies.ts",
+        "docs/projects/dandelion-labs/content-funnel-strategy.md",
+        "docs/projects/dandelion-labs/FUNNEL-SYSTEM-OVERVIEW.md"
+      ],
+      "directories": [
+        "src/app",
+        "src/components",
+        "src/lib"
+      ],
+      "commands": [
+        "pm2 list",
+        "pm2 logs robert-task-manager --lines 50"
+      ]
+    },
+    "blog": {
+      "description": "Robert's personal blog (robert-claw.com)",
+      "files": [
+        "package.json",
+        "README.md"
+      ],
+      "directories": [
+        "app",
+        "components",
+        "lib",
+        "content/blog"
+      ],
+      "commands": [
+        "pm2 logs robert-blog --lines 50"
+      ]
+    },
+    "scout": {
+      "description": "Lead generation crawler app (scout.robert-claw.com)",
+      "files": [
+        "package.json"
+      ],
+      "directories": [
+        "src",
+        "public"
+      ],
+      "commands": [
+        "pm2 logs scout --lines 50"
+      ]
+    },
+    "infrastructure": {
+      "description": "Server, DNS, deployment, hosting",
+      "files": [
+        "TOOLS.md",
+        "scripts/backup.sh",
+        ".clawhub/installed.json"
+      ],
+      "directories": [
+        "scripts"
+      ],
+      "commands": [
+        "pm2 list",
+        "df -h",
+        "systemctl status nginx",
+        "certbot certificates"
+      ],
+      "notes": [
+        "Server: 46.225.78.116 (Hetzner arm64)",
+        "Cloudflare Zone: 8fb4f01bcfedde336f0d4235a810c0ef",
+        "Apps: robert-blog (3031), community-manager (3030), scout (3032)"
+      ]
+    },
+    "skills": {
+      "description": "OpenClaw skills development and management",
+      "files": [
+        ".clawhub/installed.json",
+        "TOOLS.md"
+      ],
+      "directories": [
+        "skills"
+      ],
+      "commands": [
+        "clawhub list",
+        "ls -la skills/"
+      ]
+    },
+    "dandelion-labs": {
+      "description": "Dandelion Labs marketing, content, and strategy",
+      "files": [
+        "docs/global/dandelion-labs-marketing-strategy-v2.md",
+        "docs/projects/dandelion-labs/content-funnel-strategy.md",
+        "docs/projects/dandelion-labs/FUNNEL-SYSTEM-OVERVIEW.md",
+        "TOOLS.md"
+      ],
+      "directories": [
+        "docs/projects/dandelion-labs"
+      ],
+      "commands": [
+        "curl -s http://localhost:3030/api/projects | jq '.projects[] | select(.id==\"dandelion-labs\")'",
+        "curl -s http://localhost:3030/api/content?projectId=dandelion-labs | jq '.content | length'"
+      ]
+    },
+    "personal": {
+      "description": "Personal context, preferences, and identity",
+      "files": [
+        "USER.md",
+        "SOUL.md",
+        "IDENTITY.md",
+        "TOOLS.md",
+        "AGENTS.md"
+      ],
+      "directories": []
+    },
+    "memory": {
+      "description": "Long-term memory and daily logs",
+      "files": [
+        "MEMORY.md"
+      ],
+      "directories": [
+        "memory"
+      ],
+      "commands": [
+        "ls -lh memory/*.md | tail -10"
+      ]
+    },
+    "heartbeat": {
+      "description": "Heartbeat tasks and monitoring",
+      "files": [
+        "HEARTBEAT.md",
+        "memory/heartbeat-state.json"
+      ],
+      "directories": [],
+      "commands": [
+        "curl -s http://localhost:3030/api/notifications?unread=true",
+        "pm2 list"
+      ]
+    }
+  }
+}

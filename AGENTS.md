@@ -10,6 +10,13 @@ If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out w
 
 Before doing anything else:
 
+### If Leon says "use context {name}"
+1. **Run:** `node skills/context-router/load-context.js {name}`
+2. **Load ONLY the files listed** in that context
+3. **Run the suggested commands** if they help
+4. **DO NOT load** SOUL.md, USER.md, MEMORY.md unless they're in the context
+
+### Otherwise (no explicit context)
 1. **Classify the context** - Run `node skills/context-router/classify.js "<message>"`
 2. **Load only relevant files** based on the context returned
 3. Always load: `SOUL.md`, `USER.md`, today's memory
@@ -18,6 +25,8 @@ Before doing anything else:
 This massively reduces token usage and keeps conversations focused.
 
 Don't ask permission. Just do it.
+
+**Available contexts:** Run `node skills/context-router/load-context.js --list`
 
 ## Memory
 

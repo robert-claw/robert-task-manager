@@ -19,6 +19,31 @@ Massively reduces token usage and keeps conversations focused.
 3. Load only the files defined for that context
 4. Track conversation state per context
 
+## Two Modes
+
+### Mode 1: Explicit Context (NEW)
+**When:** Leon says "use context {name}" at the start of a message  
+**Do:** Load ONLY the files defined in that context
+
+```bash
+# List available contexts
+node skills/context-router/load-context.js --list
+
+# Load a specific context
+node skills/context-router/load-context.js infrastructure
+```
+
+**Examples:**
+- "use context infrastructure - check nginx status"
+- "use context community-manager - add search feature"
+- "use context dandelion-labs - create 5 LinkedIn posts"
+
+**Contexts defined in:** `.openclaw/contexts.json`
+
+### Mode 2: Automatic Classification
+**When:** No explicit context specified  
+**Do:** Classify message and load relevant files
+
 ## Usage
 
 ### 1. Classify the Message
