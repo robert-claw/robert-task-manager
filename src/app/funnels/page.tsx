@@ -100,7 +100,7 @@ export default function FunnelsPage() {
       <Sidebar
         projects={projects}
         selectedProject={selectedProject}
-        onProjectChange={setSelectedProject}
+        onProjectChange={(projectId) => setSelectedProject(projectId || 'dandelion-labs')}
         onCreateProject={() => {}}
       />
 
