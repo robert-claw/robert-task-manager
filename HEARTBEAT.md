@@ -136,3 +136,26 @@ If content has changes requested:
 1. Read the comments to understand what changes are needed
 2. Update the content accordingly
 3. Set status back to ready_for_review
+
+## 7. Liberture Content Population (1x daily)
+
+Add 1-2 knowledge articles per heartbeat using context liberture:
+
+```bash
+node skills/context-router/load-context.js liberture
+cd /root/liberture && npx tsx -e "
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
+// Add article here
+"
+```
+
+**Focus areas:**
+- Biohacking fundamentals (cold exposure, breathwork, sleep)
+- Supplement guides (nootropics, adaptogens, vitamins)
+- Recovery protocols (red light, massage, stretching)
+- Mental practices (meditation, journaling, therapy)
+- Financial independence (investing, passive income)
+- Free resources only (royalty-free, public domain)
+
+Track in heartbeat-state.json under "lastLibertureContent"

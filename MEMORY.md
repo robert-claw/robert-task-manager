@@ -172,5 +172,15 @@ Personal roadmap documented in `ROADMAP.md`.
 - **Benefits:** Scalable, CDN-ready, no local disk usage
 - **URL Pattern:** https://robert-claw.nbg1.your-objectstorage.com/uploads/{file}
 
+### Liberture Admin Panel (Feb 7, 2026)
+- **Location:** https://liberture.com/admin-login (login) → https://liberture.com/admin (panel)
+- **Purpose:** Manually manage all database entries (marketplace, content, knowledge, social posts, comments)
+- **Features:** Tabbed interface, search/filter, CRUD operations, edit modals for marketplace & knowledge
+- **Authentication:** JWT-based with httpOnly cookies, bcrypt password hashing, 7-day sessions
+- **Leon's Account:** leon@liberture.com / Liberture2026! (BOS Level 10)
+- **Repo:** leonacostaok/liberture (commits b5a0643, f68282b)
+- **Status:** Deployed and working
+- **Docs:** `/root/.openclaw/workspace/memory/2026-02-07-liberture-admin.md`
+
 ---
-*Last updated: 2026-02-07 15:52 UTC*
+*Last updated: 2026-02-07 18:19 UTC*

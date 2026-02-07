@@ -1,139 +1,124 @@
 {
   "contexts": {
     "community-manager": {
-      "description": "Next.js Community Manager app (task-manager.robert-claw.com)",
+      "name": "Community Manager",
+      "description": "Content creation, scheduling, and social media management",
       "files": [
-        "package.json",
-        "src/app/layout.tsx",
-        "src/lib/types.ts",
-        "src/lib/funnel-strategies.ts",
+        "SOUL.md",
+        "USER.md",
+        "TOOLS.md",
+        "memory/heartbeat-state.json",
         "docs/projects/dandelion-labs/content-funnel-strategy.md",
-        "docs/projects/dandelion-labs/FUNNEL-SYSTEM-OVERVIEW.md"
-      ],
-      "directories": [
-        "src/app",
-        "src/components",
-        "src/lib"
+        "src/lib/types.ts",
+        "src/lib/funnel-strategies.ts"
       ],
       "commands": [
-        "pm2 list",
-        "pm2 logs robert-task-manager --lines 50"
-      ]
-    },
-    "blog": {
-      "description": "Robert's personal blog (robert-claw.com)",
-      "files": [
-        "package.json",
-        "README.md"
-      ],
-      "directories": [
-        "app",
-        "components",
-        "lib",
-        "content/blog"
-      ],
-      "commands": [
-        "pm2 logs robert-blog --lines 50"
-      ]
-    },
-    "scout": {
-      "description": "Lead generation crawler app (scout.robert-claw.com)",
-      "files": [
-        "package.json"
-      ],
-      "directories": [
-        "src",
-        "public"
-      ],
-      "commands": [
-        "pm2 logs scout --lines 50"
+        "pm2 status robert-task-manager",
+        "curl -s http://localhost:3030/api/projects"
       ]
     },
     "infrastructure": {
-      "description": "Server, DNS, deployment, hosting",
+      "name": "Infrastructure",
+      "description": "Server management, deployments, nginx, PM2, DNS",
       "files": [
-        "TOOLS.md",
-        "scripts/backup.sh",
-        ".clawhub/installed.json"
-      ],
-      "directories": [
-        "scripts"
-      ],
-      "commands": [
-        "pm2 list",
-        "df -h",
-        "systemctl status nginx",
-        "certbot certificates"
-      ],
-      "notes": [
-        "Server: 46.225.78.116 (Hetzner arm64)",
-        "Cloudflare Zone: 8fb4f01bcfedde336f0d4235a810c0ef",
-        "Apps: robert-blog (3031), community-manager (3030), scout (3032)"
-      ]
-    },
-    "skills": {
-      "description": "OpenClaw skills development and management",
-      "files": [
-        ".clawhub/installed.json",
-        "TOOLS.md"
-      ],
-      "directories": [
-        "skills"
-      ],
-      "commands": [
-        "clawhub list",
-        "ls -la skills/"
-      ]
-    },
-    "dandelion-labs": {
-      "description": "Dandelion Labs marketing, content, and strategy",
-      "files": [
-        "docs/global/dandelion-labs-marketing-strategy-v2.md",
-        "docs/projects/dandelion-labs/content-funnel-strategy.md",
-        "docs/projects/dandelion-labs/FUNNEL-SYSTEM-OVERVIEW.md",
-        "TOOLS.md"
-      ],
-      "directories": [
-        "docs/projects/dandelion-labs"
-      ],
-      "commands": [
-        "curl -s http://localhost:3030/api/projects | jq '.projects[] | select(.id==\"dandelion-labs\")'",
-        "curl -s http://localhost:3030/api/content?projectId=dandelion-labs | jq '.content | length'"
-      ]
-    },
-    "personal": {
-      "description": "Personal context, preferences, and identity",
-      "files": [
-        "USER.md",
         "SOUL.md",
-        "IDENTITY.md",
+        "USER.md",
         "TOOLS.md",
-        "AGENTS.md"
+        "memory/heartbeat-state.json"
       ],
-      "directories": []
+      "commands": [
+        "pm2 status",
+        "systemctl status nginx"
+      ]
+    },
+    "blog": {
+      "name": "Robert Blog",
+      "description": "Personal blog content, posts, and website management",
+      "files": [
+        "SOUL.md",
+        "USER.md",
+        "IDENTITY.md",
+        "memory/heartbeat-state.json"
+      ],
+      "commands": [
+        "pm2 status robert-blog"
+      ]
+    },
+    "dandelion": {
+      "name": "Dandelion Labs",
+      "description": "Corporate website, newsletter, contact forms, marketing",
+      "files": [
+        "SOUL.md",
+        "USER.md",
+        "TOOLS.md",
+        "memory/heartbeat-state.json",
+        "docs/projects/dandelion-labs/content-funnel-strategy.md"
+      ],
+      "commands": [
+        "pm2 status dandelion-corporate"
+      ]
+    },
+    "scout": {
+      "name": "Scout (Lead Generation)",
+      "description": "Lead generation crawler and enrichment system",
+      "files": [
+        "SOUL.md",
+        "USER.md",
+        "TOOLS.md",
+        "memory/heartbeat-state.json"
+      ],
+      "commands": [
+        "pm2 status scout"
+      ]
+    },
+    "liberture": {
+      "name": "Liberture",
+      "description": "Biohacking platform - directory, authentication, content, marketplace",
+      "files": [
+        "SOUL.md",
+        "USER.md",
+        "memory/heartbeat-state.json",
+        "memory/2026-02-07-liberture.md",
+        "memory/2026-02-07-liberture-admin.md"
+      ],
+      "commands": [
+        "pm2 status liberture",
+        "cd /root/liberture && git status"
+      ]
+    },
+    "git": {
+      "name": "Git Operations",
+      "description": "Git workflows, commits, branching, collaboration",
+      "files": [
+        "SOUL.md",
+        "USER.md"
+      ],
+      "commands": []
     },
     "memory": {
-      "description": "Long-term memory and daily logs",
+      "name": "Memory & Documentation",
+      "description": "Update MEMORY.md, daily logs, documentation",
       "files": [
-        "MEMORY.md"
+        "SOUL.md",
+        "USER.md",
+        "MEMORY.md",
+        "AGENTS.md",
+        "TOOLS.md"
       ],
-      "directories": [
-        "memory"
-      ],
-      "commands": [
-        "ls -lh memory/*.md | tail -10"
-      ]
+      "commands": []
     },
-    "heartbeat": {
-      "description": "Heartbeat tasks and monitoring",
+    "self": {
+      "name": "Self Improvement",
+      "description": "Code refactoring, bug fixes, UI improvements during sleep hours",
       "files": [
+        "SOUL.md",
+        "USER.md",
+        "AGENTS.md",
         "HEARTBEAT.md",
         "memory/heartbeat-state.json"
       ],
-      "directories": [],
       "commands": [
-        "curl -s http://localhost:3030/api/notifications?unread=true",
-        "pm2 list"
+        "pm2 logs --lines 50"
       ]
     }
   }
