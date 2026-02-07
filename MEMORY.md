@@ -29,9 +29,17 @@
 - `robert-claw/scout` — Lead generation crawler (pending GitHub push)
 - Access to `dandelionlabs-io/corporate` for blog posts
 
+### Object Storage
+- **Hetzner Object Storage** (S3-compatible)
+- Bucket: robert-claw @ nbg1.your-objectstorage.com
+- All media uploads (images/videos) stored here
+- Public read, authenticated write
+- URL pattern: `https://robert-claw.nbg1.your-objectstorage.com/uploads/{file}`
+
 ### Credentials (stored securely, not in files)
 - Task manager auth: leon / clawsome2026
 - Cloudflare Zone: 8fb4f01bcfedde336f0d4235a810c0ef
+- Hetzner S3: Access key in .env.local
 
 ## Tech Stack Preferences
 - Next.js App Router (latest version)
@@ -120,5 +128,24 @@
 - **Benefit:** 85% token reduction by loading only relevant files
 - **Docs:** docs/CONTEXTS.md
 
+### Personal Brand Features (Feb 7, 2026)
+- **Repo:** robert-claw/robert-task-manager (Community Manager)
+- **Added:** Project types (business vs personal)
+- **Added:** Image/video upload with Hetzner Object Storage integration
+- **Added:** Link fields for driving traffic to blog/newsletter
+- **Added:** Instagram platform support for Leon Acosta
+- **Marketing Plan:** Rewrote Leon Acosta brand (biohacking, consciousness, financial sovereignty, cold exposure)
+- **Moved:** 5 AI/startup LinkedIn posts from Leon to Dandelion Labs
+- **Fixed:** Funnels page integrated with dashboard layout
+- **Docs:** docs/features/IMAGE-UPLOAD-AND-PERSONAL-BRAND.md, docs/features/HETZNER-STORAGE.md
+
+### Hetzner Object Storage (Feb 7, 2026)
+- **Service:** S3-compatible object storage @ nbg1.your-objectstorage.com
+- **Bucket:** robert-claw (public read, auth write)
+- **Supports:** Images (10MB max), Videos (100MB max)
+- **SDK:** AWS SDK v3 for S3
+- **Benefits:** Scalable, CDN-ready, no local disk usage
+- **URL Pattern:** https://robert-claw.nbg1.your-objectstorage.com/uploads/{file}
+
 ---
-*Last updated: 2026-02-07 12:10 UTC*
+*Last updated: 2026-02-07 15:52 UTC*
