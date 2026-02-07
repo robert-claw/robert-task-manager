@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { LoadingPage } from '@/components/ui/Loading'
+import { NewProjectModal, NewProjectData } from '@/components/features/projects/NewProjectModal'
 import {
   FileText,
   Plus,
@@ -17,6 +18,7 @@ import {
   Save,
   Eye,
   RefreshCw,
+  FolderOpen,
 } from '@/components/ui/Icons'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 
@@ -32,6 +34,7 @@ interface DocFile {
   path: string
   size: number
   modifiedAt: string
+  projectId?: string
 }
 
 interface DocContent {
@@ -39,6 +42,7 @@ interface DocContent {
   content: string
   size: number
   modifiedAt: string
+  projectId?: string
 }
 
 function DocsContent() {
@@ -52,38 +56,54 @@ function DocsContent() {
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState('')
   const [showNewModal, setShowNewModal] = useState(false)
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false)
   const [newDocName, setNewDocName] = useState('')
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; doc: DocFile | null }>({ isOpen: false, doc: null })
   const toast = useToast()
   
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await fetch('/api/projects')
+      const data = await res.json()
+      setProjects(data.projects || [])
+    } catch (error) {
+      console.error('Failed to fetch projects:', error)
+    }
+  }, [])
+  
   const fetchDocs = useCallback(async () => {
     try {
-      const [projectsRes, docsRes] = await Promise.all([
-        fetch('/api/projects'),
-        fetch('/api/docs'),
-      ])
-      
-      const projectsData = await projectsRes.json()
-      const docsData = await docsRes.json()
-      
-      setProjects(projectsData.projects || [])
-      setDocs(docsData.docs || [])
+      const url = selectedProject 
+        ? `/api/docs?projectId=${selectedProject}`
+        : '/api/docs'
+      const res = await fetch(url)
+      const data = await res.json()
+      setDocs(data.docs || [])
     } catch (error) {
-      console.error('Failed to fetch data:', error)
+      console.error('Failed to fetch docs:', error)
       toast.error('Failed to load documents')
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [selectedProject, toast])
   
   useEffect(() => {
+    fetchProjects()
+  }, [fetchProjects])
+  
+  useEffect(() => {
+    setLoading(true)
+    setSelectedDoc(null)
     fetchDocs()
-  }, [fetchDocs])
+  }, [fetchDocs, selectedProject])
   
   async function loadDoc(fileName: string) {
     setLoadingDoc(true)
     try {
-      const res = await fetch(`/api/docs?file=${encodeURIComponent(fileName)}`)
+      const url = selectedProject
+        ? `/api/docs?file=${encodeURIComponent(fileName)}&projectId=${selectedProject}`
+        : `/api/docs?file=${encodeURIComponent(fileName)}`
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to load document')
       const data = await res.json()
       setSelectedDoc(data)
@@ -103,7 +123,11 @@ function DocsContent() {
       const res = await fetch('/api/docs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: selectedDoc.name, content: editContent }),
+        body: JSON.stringify({ 
+          name: selectedDoc.name, 
+          content: editContent,
+          projectId: selectedProject,
+        }),
       })
       
       if (!res.ok) throw new Error('Failed to save')
@@ -130,6 +154,7 @@ function DocsContent() {
         body: JSON.stringify({ 
           name: newDocName.trim(),
           content: `# ${newDocName.trim()}\n\nStart writing here...`,
+          projectId: selectedProject,
         }),
       })
       
@@ -150,9 +175,10 @@ function DocsContent() {
     if (!deleteModal.doc) return
     
     try {
-      const res = await fetch(`/api/docs?file=${encodeURIComponent(deleteModal.doc.name)}`, {
-        method: 'DELETE',
-      })
+      const url = selectedProject
+        ? `/api/docs?file=${encodeURIComponent(deleteModal.doc.name)}&projectId=${selectedProject}`
+        : `/api/docs?file=${encodeURIComponent(deleteModal.doc.name)}`
+      const res = await fetch(url, { method: 'DELETE' })
       
       if (!res.ok) throw new Error('Failed to delete')
       
@@ -167,9 +193,46 @@ function DocsContent() {
     }
   }
   
+  async function handleCreateProject(data: NewProjectData) {
+    try {
+      const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          slug,
+          description: data.description,
+          icon: data.icon,
+          color: data.color,
+          platforms: data.platforms.map(p => ({
+            platform: p,
+            enabled: true,
+            connectionStatus: 'pending',
+            cadence: '3x/week',
+          })),
+          marketingPlan: { goals: [], targetAudience: '', contentPillars: [], notes: '' },
+          settings: { timezone: 'UTC', defaultAssignee: 'leon', autoSchedule: false },
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to create project')
+
+      const newProject = await res.json()
+      toast.success('Project Created', `${data.name} is ready to use`)
+      await fetchProjects()
+      setSelectedProject(newProject.id)
+    } catch (error) {
+      toast.error('Failed to create project')
+      throw error
+    }
+  }
+  
   const filteredDocs = docs.filter(doc => 
     doc.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+  
+  const currentProject = projects.find(p => p.id === selectedProject)
   
   function formatBytes(bytes: number) {
     if (bytes < 1024) return `${bytes} B`
@@ -193,7 +256,6 @@ function DocsContent() {
     const elements: React.ReactNode[] = []
     let inCodeBlock = false
     let codeContent: string[] = []
-    let codeLanguage = ''
     
     lines.forEach((line, index) => {
       // Code blocks
@@ -208,7 +270,6 @@ function DocsContent() {
           inCodeBlock = false
         } else {
           inCodeBlock = true
-          codeLanguage = line.slice(3)
         }
         return
       }
@@ -276,7 +337,7 @@ function DocsContent() {
     return elements
   }
   
-  if (loading) {
+  if (loading && projects.length === 0) {
     return <LoadingPage message="Loading documents..." />
   }
   
@@ -286,6 +347,7 @@ function DocsContent() {
         projects={projects}
         selectedProject={selectedProject}
         onProjectChange={setSelectedProject}
+        onCreateProject={() => setShowNewProjectModal(true)}
       />
       
       <div className="flex-1 flex">
@@ -293,10 +355,20 @@ function DocsContent() {
         <div className="w-80 bg-slate-900 border-r border-slate-800 flex flex-col">
           <div className="p-4 border-b border-slate-800">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <FileText size={20} className="text-cyan-400" />
-                Documents
-              </h2>
+              <div>
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <FileText size={20} className="text-cyan-400" />
+                  Documents
+                </h2>
+                {currentProject ? (
+                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                    <span>{currentProject.icon}</span>
+                    {currentProject.name}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500 mt-1">Global docs</p>
+                )}
+              </div>
               <button
                 onClick={() => setShowNewModal(true)}
                 className="p-2 bg-cyan-500 text-black rounded-lg hover:bg-cyan-400"
@@ -319,9 +391,17 @@ function DocsContent() {
           </div>
           
           <div className="flex-1 overflow-y-auto p-2">
-            {filteredDocs.length === 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw size={20} className="text-cyan-400 animate-spin" />
+              </div>
+            ) : filteredDocs.length === 0 ? (
               <div className="text-center py-8 text-slate-500">
-                {docs.length === 0 ? 'No documents yet' : 'No matches found'}
+                <FolderOpen size={32} className="mx-auto mb-2 opacity-50" />
+                <p>{docs.length === 0 ? 'No documents yet' : 'No matches found'}</p>
+                {currentProject && docs.length === 0 && (
+                  <p className="text-xs mt-1">Create docs for {currentProject.name}</p>
+                )}
               </div>
             ) : (
               <ul className="space-y-1">
@@ -431,6 +511,9 @@ function DocsContent() {
               <div className="text-center">
                 <FileText size={48} className="mx-auto mb-4 opacity-50" />
                 <p>Select a document to view</p>
+                {currentProject && (
+                  <p className="text-sm mt-1">or create a new doc for {currentProject.name}</p>
+                )}
               </div>
             </div>
           )}
@@ -454,7 +537,12 @@ function DocsContent() {
               onClick={(e) => e.stopPropagation()}
               className="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-6"
             >
-              <h2 className="text-xl font-bold text-white mb-4">New Document</h2>
+              <h2 className="text-xl font-bold text-white mb-2">New Document</h2>
+              {currentProject && (
+                <p className="text-sm text-slate-400 mb-4">
+                  For: {currentProject.icon} {currentProject.name}
+                </p>
+              )}
               <input
                 type="text"
                 value={newDocName}
@@ -491,6 +579,13 @@ function DocsContent() {
         message={`Are you sure you want to delete "${deleteModal.doc?.name}"? This cannot be undone.`}
         confirmLabel="Delete"
         variant="danger"
+      />
+      
+      {/* New Project Modal */}
+      <NewProjectModal
+        isOpen={showNewProjectModal}
+        onClose={() => setShowNewProjectModal(false)}
+        onSave={handleCreateProject}
       />
     </div>
   )

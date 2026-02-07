@@ -2,26 +2,37 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 
-const DOCS_PATH = path.join(process.cwd(), 'docs')
+const DOCS_BASE_PATH = path.join(process.cwd(), 'docs')
 
 interface DocFile {
   name: string
   path: string
   size: number
   modifiedAt: string
+  projectId?: string
+}
+
+function getDocsPath(projectId?: string | null): string {
+  if (projectId) {
+    return path.join(DOCS_BASE_PATH, 'projects', projectId)
+  }
+  return path.join(DOCS_BASE_PATH, 'global')
 }
 
 // GET - List all docs or get a specific doc
 export async function GET(request: NextRequest) {
   try {
     const fileName = request.nextUrl.searchParams.get('file')
+    const projectId = request.nextUrl.searchParams.get('projectId')
+    
+    const docsPath = getDocsPath(projectId)
     
     // If file specified, return its content
     if (fileName) {
-      const filePath = path.join(DOCS_PATH, fileName)
+      const filePath = path.join(docsPath, fileName)
       
       // Security: prevent path traversal
-      if (!filePath.startsWith(DOCS_PATH)) {
+      if (!filePath.startsWith(docsPath)) {
         return NextResponse.json({ error: 'Invalid path' }, { status: 400 })
       }
       
@@ -37,31 +48,32 @@ export async function GET(request: NextRequest) {
         content,
         size: stats.size,
         modifiedAt: stats.mtime.toISOString(),
+        projectId: projectId || null,
       })
     }
     
-    // Otherwise, list all markdown files
-    if (!fs.existsSync(DOCS_PATH)) {
-      fs.mkdirSync(DOCS_PATH, { recursive: true })
-      return NextResponse.json({ docs: [] })
+    // List docs for the specified project (or global)
+    if (!fs.existsSync(docsPath)) {
+      fs.mkdirSync(docsPath, { recursive: true })
     }
     
-    const files = fs.readdirSync(DOCS_PATH)
+    const files = fs.readdirSync(docsPath)
     const docs: DocFile[] = files
       .filter(f => f.endsWith('.md'))
       .map(name => {
-        const filePath = path.join(DOCS_PATH, name)
+        const filePath = path.join(docsPath, name)
         const stats = fs.statSync(filePath)
         return {
           name,
           path: `/docs/${name}`,
           size: stats.size,
           modifiedAt: stats.mtime.toISOString(),
+          projectId: projectId || undefined,
         }
       })
       .sort((a, b) => new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime())
     
-    return NextResponse.json({ docs })
+    return NextResponse.json({ docs, projectId: projectId || null })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to read docs' },
@@ -82,13 +94,15 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    const docsPath = getDocsPath(body.projectId)
+    
     // Sanitize filename
     const fileName = body.name.endsWith('.md') ? body.name : `${body.name}.md`
     const safeName = fileName.replace(/[^a-zA-Z0-9-_.]/g, '-')
-    const filePath = path.join(DOCS_PATH, safeName)
+    const filePath = path.join(docsPath, safeName)
     
-    if (!fs.existsSync(DOCS_PATH)) {
-      fs.mkdirSync(DOCS_PATH, { recursive: true })
+    if (!fs.existsSync(docsPath)) {
+      fs.mkdirSync(docsPath, { recursive: true })
     }
     
     fs.writeFileSync(filePath, body.content, 'utf-8')
@@ -96,6 +110,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: 'Document saved',
       name: safeName,
+      projectId: body.projectId || null,
     })
   } catch (error) {
     return NextResponse.json(
@@ -109,15 +124,17 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const fileName = request.nextUrl.searchParams.get('file')
+    const projectId = request.nextUrl.searchParams.get('projectId')
     
     if (!fileName) {
       return NextResponse.json({ error: 'file param required' }, { status: 400 })
     }
     
-    const filePath = path.join(DOCS_PATH, fileName)
+    const docsPath = getDocsPath(projectId)
+    const filePath = path.join(docsPath, fileName)
     
     // Security: prevent path traversal
-    if (!filePath.startsWith(DOCS_PATH)) {
+    if (!filePath.startsWith(docsPath)) {
       return NextResponse.json({ error: 'Invalid path' }, { status: 400 })
     }
     
