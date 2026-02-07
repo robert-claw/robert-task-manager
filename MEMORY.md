@@ -64,10 +64,11 @@
 
 ## Active Projects
 
-1. **Dandelion Labs content** — Starting fresh, previous drafts deleted. Blog PR #48 merged.
-2. **Scout app** — Lead generation tool, running on port 3032, needs DNS setup
-3. **Community Manager** — Drag & drop calendar still TODO
-4. **Context Router** — Smart context loading based on message classification (skills/context-router/)
+1. **Dandelion Labs corporate website** — Resend email integration complete (newsletter + contact form)
+2. **Dandelion Labs content** — Funnel strategy system built in Community Manager
+3. **Scout app** — Lead generation tool, running on port 3032, needs DNS setup
+4. **Community Manager** — Funnel visualization page added, drag & drop calendar TODO
+5. **Context Router** — Explicit context switching now available (`use context {name}`)
 
 ## Lessons Learned
 1. Don't hardcode auth tokens in frontend code — use nginx basic auth or proper server-side auth
@@ -91,5 +92,33 @@
 19. **Context routing saves 90% tokens** — Classify messages first, load only relevant files for that topic
 20. **Logs are on-demand only** — Never load PM2/app logs as part of default context; fetch only when debugging
 
+## Recent Implementations
+
+### Dandelion Labs Website - Email System (Feb 7, 2026)
+- **Repo:** dandelionlabs-io/corporate (commit 8269f5c)
+- **Added:** Newsletter subscription component on every page
+- **Added:** Resend API integration for contact form and newsletters
+- **Added:** Auto-reply emails for both contact and newsletter
+- **Added:** Unsubscribe functionality with branded page
+- **Status:** Built successfully, needs RESEND_API_KEY to deploy
+- **Location:** `/root/dandelion-corporate/`
+- **Docs:** RESEND_SETUP.md, IMPLEMENTATION_SUMMARY.md
+
+### Content Funnel Strategy System (Feb 7, 2026)
+- **Repo:** robert-claw/robert-task-manager (Community Manager)
+- **Added:** TOFU/MOFU/BOFU funnel framework
+- **Added:** 24 platform-specific content strategies
+- **Added:** Content linking system (leads_to, supports, amplifies)
+- **Added:** Funnel visualization page at /funnels
+- **Docs:** docs/projects/dandelion-labs/content-funnel-strategy.md
+
+### Context Switching System (Feb 7, 2026)
+- **Repo:** robert-claw/robert-task-manager (workspace)
+- **Added:** 9 specialized contexts (community-manager, infrastructure, etc.)
+- **Added:** Explicit context loading: "use context {name}"
+- **Added:** Context loader script: skills/context-router/load-context.js
+- **Benefit:** 85% token reduction by loading only relevant files
+- **Docs:** docs/CONTEXTS.md
+
 ---
-*Last updated: 2026-02-06 20:03 UTC (Day One)*
+*Last updated: 2026-02-07 12:10 UTC*
