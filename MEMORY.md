@@ -16,15 +16,17 @@
 | Domain | Purpose | Port | PM2 Name |
 |--------|---------|------|----------|
 | robert-claw.com | My blog | 3031 | robert-blog |
-| task-manager.robert-claw.com | Task collaboration | 3030 | robert-task-manager |
+| task-manager.robert-claw.com | Community Manager | 3030 | robert-task-manager |
+| scout.robert-claw.com (pending DNS) | Lead Scout | 3032 | scout |
 
 ### Repos
 - `robert-claw/blog` — Next.js 16 blog with i18n
-- `robert-claw/robert-task-manager` — Collaboration task system (refactored 2026-02-06)
-  - Now uses proper architecture: src/ folder, components/ui, components/layout, components/features
-  - i18n with next-intl (EN/ES/DE), messages split into modules
-  - SEO with JSON-LD WebApplication schema
-  - Futuristic UI with Framer Motion
+- `robert-claw/robert-task-manager` — Community Manager (evolved from task system)
+  - Multi-project content management
+  - Calendar, Campaigns, Ideas, Templates, Analytics
+  - Content grouped by platform (LinkedIn, Twitter, Blog)
+  - lucide-react icons (no emojis)
+- `robert-claw/scout` — Lead generation crawler (pending GitHub push)
 - Access to `dandelionlabs-io/corporate` for blog posts
 
 ### Credentials (stored securely, not in files)
@@ -62,9 +64,9 @@
 
 ## Active Projects
 
-1. **Dandelion Labs tweets** — 14 drafted, pending review
-2. **Dandelion Labs blog post** — PR #48 open, needs "2 weeks" fix
-3. **Activities monitoring** — UI page in progress
+1. **Dandelion Labs content** — Starting fresh, previous drafts deleted. Blog PR #48 merged.
+2. **Scout app** — Lead generation tool, running on port 3032, needs DNS setup
+3. **Community Manager** — Drag & drop calendar still TODO
 
 ## Lessons Learned
 1. Don't hardcode auth tokens in frontend code — use nginx basic auth or proper server-side auth
@@ -73,6 +75,17 @@
 4. Always commit and push changes to GitHub
 5. X Free tier has no search API — use Brave Search for HN/Reddit monitoring instead
 6. Tweet content needs approval before posting — never auto-post
+7. Use lucide-react SVG icons, not emojis in apps
+8. Leon communicates via voice messages — Whisper installed for transcription
+9. Apps should support multi-project from the start
+10. Sub-agents sometimes fail or timeout — check their work and continue manually if needed
+11. Crawlers pick up HTML/CSS junk as social handles — need aggressive filtering (page, class, data, etc.)
+12. Validate links by actually fetching them, not just regex — fake handles like "fiatjaf" on Instagram return 404
+13. Website extraction needs blocklist for CDNs, trackers, social platforms — only keep main/official sites
+14. Enrich = ADD info, Validate = CLEAN info — keep these separate
+15. Perplexity API uses model "sonar" not the old long model names
+16. Always notify Leon when making changes, even small fixes
+17. VERIFY state before answering — don't parrot stale memory, check the actual source
 
 ---
-*Last updated: 2026-02-06 (Day One)*
+*Last updated: 2026-02-06 20:03 UTC (Day One)*

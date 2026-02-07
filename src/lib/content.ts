@@ -37,10 +37,10 @@ export function saveContent(content: ContentItem[]): void {
   fs.writeFileSync(CONTENT_FILE, JSON.stringify(content, null, 2))
 }
 
-// Get content by ID
+// Get content by ID (handles both string and number IDs)
 export function getContent(id: string): ContentItem | null {
   const content = loadContent()
-  return content.find(c => c.id === id) || null
+  return content.find(c => String(c.id) === String(id)) || null
 }
 
 // Get content by project
@@ -108,10 +108,10 @@ export function createContent(data: {
   return newContent
 }
 
-// Update content item
+// Update content item (handles both string and number IDs)
 export function updateContent(id: string, updates: Partial<ContentItem>): ContentItem | null {
   const content = loadContent()
-  const index = content.findIndex(c => c.id === id)
+  const index = content.findIndex(c => String(c.id) === String(id))
   
   if (index === -1) {
     return null
@@ -127,10 +127,10 @@ export function updateContent(id: string, updates: Partial<ContentItem>): Conten
   return content[index]
 }
 
-// Delete content item
+// Delete content item (handles both string and number IDs)
 export function deleteContent(id: string): boolean {
   const content = loadContent()
-  const index = content.findIndex(c => c.id === id)
+  const index = content.findIndex(c => String(c.id) === String(id))
   
   if (index === -1) {
     return false
@@ -141,10 +141,10 @@ export function deleteContent(id: string): boolean {
   return true
 }
 
-// Add comment to content item
+// Add comment to content item (handles both string and number IDs)
 export function addComment(contentId: string, comment: Omit<Comment, 'id' | 'createdAt'>): ContentItem | null {
   const content = loadContent()
-  const index = content.findIndex(c => c.id === contentId)
+  const index = content.findIndex(c => String(c.id) === String(contentId))
   
   if (index === -1) {
     return null

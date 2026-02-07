@@ -137,6 +137,21 @@ function CalendarPageContent() {
     }
   }
 
+  const handleAddComment = async (contentId: string, comment: string) => {
+    try {
+      const res = await fetch(`/api/content/${contentId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author: 'leon', text: comment, notifyRobert: true }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      toast.success('Comment Added')
+    } catch (error) {
+      toast.error('Failed to Add Comment')
+      throw error
+    }
+  }
+
   if (loading) {
     return <LoadingPage message="Loading calendar..." />
   }
@@ -171,6 +186,7 @@ function CalendarPageContent() {
         onStatusChange={handleStatusChange}
         onUpdate={handleUpdateContent}
         onDelete={handleDeleteContent}
+        onAddComment={handleAddComment}
       />
     </div>
   )

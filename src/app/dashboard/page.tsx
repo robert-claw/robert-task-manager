@@ -288,6 +288,21 @@ function DashboardContent() {
     }
   }
 
+  const handleAddComment = async (contentId: string, comment: string) => {
+    try {
+      const res = await fetch(`/api/content/${contentId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author: 'leon', text: comment, notifyRobert: true }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      toast.success('Comment Added')
+    } catch (error) {
+      toast.error('Failed to Add Comment')
+      throw error
+    }
+  }
+
   // Filter content by selected project
   const filteredContent = selectedProject
     ? content.filter(c => c.projectId === selectedProject)
@@ -749,6 +764,7 @@ function DashboardContent() {
         onStatusChange={handleStatusChange}
         onUpdate={handleUpdateContent}
         onDelete={handleDeleteContent}
+        onAddComment={handleAddComment}
       />
 
       {/* Stats Detail Modal */}

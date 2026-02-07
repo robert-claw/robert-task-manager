@@ -46,6 +46,7 @@ interface ContentDetailModalProps {
   onStatusChange: (contentId: string, newStatus: string) => Promise<void>
   onUpdate: (contentId: string, updates: Partial<ContentItem>) => Promise<void>
   onDelete: (contentId: string) => Promise<void>
+  onAddComment?: (contentId: string, comment: string) => Promise<void>
 }
 
 const statusConfig: Record<string, { icon: React.ElementType; bg: string; text: string; border: string; label: string }> = {
@@ -65,12 +66,15 @@ export function ContentDetailModal({
   onStatusChange,
   onUpdate,
   onDelete,
+  onAddComment,
 }: ContentDetailModalProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState('')
   const [editedTitle, setEditedTitle] = useState('')
   const [editedScheduledFor, setEditedScheduledFor] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
+  const [showChangesModal, setShowChangesModal] = useState(false)
+  const [changesRequested, setChangesRequested] = useState('')
 
   // Reset edit state when content changes
   useEffect(() => {
@@ -124,6 +128,24 @@ export function ContentDetailModal({
     setLoading(newStatus)
     try {
       await onStatusChange(content.id, newStatus)
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const handleRequestChanges = async () => {
+    if (!changesRequested.trim()) return
+    
+    setLoading('changes_requested')
+    try {
+      // Add the comment first
+      if (onAddComment) {
+        await onAddComment(content.id, `📝 Changes requested: ${changesRequested}`)
+      }
+      // Then change status
+      await onStatusChange(content.id, 'changes_requested')
+      setShowChangesModal(false)
+      setChangesRequested('')
     } finally {
       setLoading(null)
     }
@@ -319,7 +341,7 @@ export function ContentDetailModal({
                         Approve
                       </button>
                       <button
-                        onClick={() => handleStatusChange('changes_requested')}
+                        onClick={() => setShowChangesModal(true)}
                         disabled={loading === 'changes_requested'}
                         className="flex-1 px-4 py-2.5 bg-orange-500 text-black font-medium rounded-lg hover:bg-orange-400 flex items-center justify-center gap-2 transition-colors"
                       >
@@ -376,6 +398,62 @@ export function ContentDetailModal({
               )}
             </div>
           </motion.div>
+
+          {/* Request Changes Modal */}
+          <AnimatePresence>
+            {showChangesModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/50 flex items-center justify-center p-4"
+                onClick={() => setShowChangesModal(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0.95 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-slate-800 border border-slate-600 rounded-xl p-6 max-w-md w-full"
+                >
+                  <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+                    <AlertCircle size={20} className="text-orange-400" />
+                    Request Changes
+                  </h3>
+                  <p className="text-sm text-slate-400 mb-4">
+                    What changes would you like to see?
+                  </p>
+                  <textarea
+                    value={changesRequested}
+                    onChange={(e) => setChangesRequested(e.target.value)}
+                    placeholder="Describe the changes needed..."
+                    rows={4}
+                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none mb-4"
+                    autoFocus
+                  />
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() => {
+                        setShowChangesModal(false)
+                        setChangesRequested('')
+                      }}
+                      className="px-4 py-2 text-slate-300 hover:text-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleRequestChanges}
+                      disabled={!changesRequested.trim() || loading === 'changes_requested'}
+                      className="px-4 py-2 bg-orange-500 text-black font-medium rounded-lg hover:bg-orange-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {loading === 'changes_requested' ? <LoadingSpinner size={16} /> : <AlertCircle size={16} />}
+                      Request Changes
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>

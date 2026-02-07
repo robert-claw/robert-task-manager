@@ -52,6 +52,12 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - `trash` > `rm` (recoverable beats gone forever)
 - When in doubt, ask.
 
+## Communication
+
+- **Always notify Leon when making changes** - Even small fixes deserve a quick message
+- Summarize what changed and why
+- If fixing bugs or improving UI during self-improvement time, batch updates into one message
+
 ## External vs Internal
 
 **Safe to do freely:**

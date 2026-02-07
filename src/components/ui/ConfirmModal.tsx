@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertCircle, X } from 'lucide-react'
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useCallback } from 'react'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -27,6 +27,20 @@ export function ConfirmModal({
   variant = 'info',
   loading = false,
 }: ConfirmModalProps) {
+  // Handle Escape key press
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !loading) {
+      onClose()
+    }
+  }, [onClose, loading])
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, handleKeyDown])
+
   const variantStyles = {
     danger: {
       icon: 'text-red-400',

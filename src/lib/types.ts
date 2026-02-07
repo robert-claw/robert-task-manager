@@ -1,5 +1,5 @@
 // Platform types
-export type Platform = 'linkedin' | 'twitter' | 'blog' | 'instagram' | 'facebook'
+export type Platform = 'linkedin' | 'twitter' | 'blog' | 'instagram' | 'facebook' | 'nostr' | 'medium'
 
 // Content status workflow
 export type ContentStatus = 
@@ -36,8 +36,34 @@ export interface PlatformConfig {
   enabled: boolean
   accountId?: string
   accountName?: string
-  connectionStatus: 'connected' | 'pending' | 'disconnected'
+  connectionStatus: 'connected' | 'pending' | 'disconnected' | 'error'
+  connectionError?: string
   cadence?: string // e.g., "4x/week", "daily"
+  // OAuth credentials (stored securely, not exposed to frontend)
+  credentials?: PlatformCredentials
+  connectedAt?: string
+  expiresAt?: string
+}
+
+export interface PlatformCredentials {
+  accessToken?: string
+  refreshToken?: string
+  tokenType?: string
+  scope?: string
+  expiresIn?: number
+  // Platform-specific
+  pageId?: string  // Facebook page ID
+  channelId?: string  // YouTube channel
+  profileUrl?: string
+}
+
+// OAuth state for callback handling
+export interface OAuthState {
+  projectId: string
+  platform: Platform
+  returnUrl: string
+  nonce: string
+  createdAt: string
 }
 
 export interface MarketingPlan {

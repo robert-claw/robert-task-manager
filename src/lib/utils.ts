@@ -52,6 +52,8 @@ export const platformIcons: Record<Platform, string> = {
   blog: '📝',
   instagram: '📸',
   facebook: '👥',
+  nostr: '⚡',
+  medium: '✍️',
 };
 
 // Content type icons

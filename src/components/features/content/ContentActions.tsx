@@ -25,9 +25,16 @@ interface ContentItem {
   scheduledFor?: string
 }
 
+interface PlatformConfig {
+  platform: string
+  enabled: boolean
+  cadence?: string
+}
+
 interface ContentActionsProps {
   content: ContentItem[]
-  onAutoDistribute: (cadenceDays: number) => Promise<void>
+  platforms: PlatformConfig[]
+  onAutoDistribute: () => Promise<void>
   onScheduleApproved: () => Promise<void>
   onBulkApprove: (ids: string[]) => Promise<void>
   onPreviewSchedule: () => void
@@ -35,8 +42,26 @@ interface ContentActionsProps {
   onSelectedIdsChange: (ids: string[]) => void
 }
 
+// Parse cadence string into posts per week for display
+function parseCadenceDisplay(cadence?: string): string {
+  if (!cadence) return 'not set'
+  // Patterns: "4x/week", "daily", "2x/month", "weekly"
+  if (cadence === 'daily') return '7x/week'
+  if (cadence === 'weekly') return '1x/week'
+  if (cadence.includes('/week')) return cadence
+  if (cadence.includes('/month')) {
+    const match = cadence.match(/(\d+)x\/month/)
+    if (match) {
+      const perMonth = parseInt(match[1])
+      return `~${Math.round(perMonth / 4)}x/week`
+    }
+  }
+  return cadence
+}
+
 export function ContentActions({
   content,
+  platforms,
   onAutoDistribute,
   onScheduleApproved,
   onBulkApprove,
@@ -46,7 +71,6 @@ export function ContentActions({
 }: ContentActionsProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [loading, setLoading] = useState<string | null>(null)
-  const [cadenceDays, setCadenceDays] = useState(2)
   const [showWarning, setShowWarning] = useState<string | null>(null)
 
   // Content stats
@@ -54,6 +78,9 @@ export function ContentActions({
   const unapproved = content.filter(c => ['draft', 'ready_for_review', 'changes_requested'].includes(c.status))
   const approved = content.filter(c => c.status === 'approved')
   const readyForReview = content.filter(c => c.status === 'ready_for_review')
+
+  // Get platforms with cadence configured
+  const platformsWithCadence = platforms.filter(p => p.enabled && p.cadence)
 
   const handleAutoDistribute = async () => {
     if (unapproved.length > 0) {
@@ -67,7 +94,7 @@ export function ContentActions({
     setLoading('auto-distribute')
     setShowWarning(null)
     try {
-      await onAutoDistribute(cadenceDays)
+      await onAutoDistribute()
     } finally {
       setLoading(null)
     }
@@ -195,25 +222,28 @@ export function ContentActions({
                     <Sparkles size={16} className="text-purple-400" />
                     <span className="text-white font-medium text-sm">Auto-Distribute</span>
                   </div>
-                  <p className="text-slate-400 text-xs mb-3">
-                    Spread unscheduled content across dates
+                  <p className="text-slate-400 text-xs mb-2">
+                    Spread content based on project cadence
                   </p>
-                  <div className="flex items-center gap-2 mb-3">
-                    <label className="text-xs text-slate-400">Every</label>
-                    <select
-                      value={cadenceDays}
-                      onChange={(e) => setCadenceDays(Number(e.target.value))}
-                      className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                    >
-                      <option value={1}>1 day</option>
-                      <option value={2}>2 days</option>
-                      <option value={3}>3 days</option>
-                      <option value={7}>1 week</option>
-                    </select>
-                  </div>
+                  {platformsWithCadence.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {platformsWithCadence.map(p => (
+                        <span 
+                          key={p.platform} 
+                          className="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300"
+                        >
+                          {p.platform}: {parseCadenceDisplay(p.cadence)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-yellow-400/70 text-xs mb-3">
+                      Set cadence in project settings
+                    </p>
+                  )}
                   <button
                     onClick={handleAutoDistribute}
-                    disabled={loading === 'auto-distribute' || unscheduled.length === 0}
+                    disabled={loading === 'auto-distribute' || unscheduled.length === 0 || platformsWithCadence.length === 0}
                     className="w-full px-3 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium"
                   >
                     {loading === 'auto-distribute' ? (

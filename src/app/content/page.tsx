@@ -29,11 +29,18 @@ import {
   Trash2,
 } from '@/components/ui/Icons'
 
+interface PlatformConfig {
+  platform: string
+  enabled: boolean
+  cadence?: string
+}
+
 interface Project {
   id: string
   name: string
   icon: string
   color: string
+  platforms?: PlatformConfig[]
 }
 
 interface ContentItem {
@@ -248,39 +255,169 @@ function ContentPageContent() {
     }
   }
 
+  const handleAddComment = async (contentId: string, comment: string) => {
+    try {
+      const res = await fetch(`/api/content/${contentId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          author: 'leon',
+          text: comment,
+          notifyRobert: true,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to add comment')
+      
+      toast.success('Comment Added')
+    } catch (error) {
+      console.error('Failed to add comment:', error)
+      toast.error('Failed to Add Comment')
+      throw error
+    }
+  }
+
+  // Parse cadence string to days between posts
+  const parseCadenceToDays = (cadence?: string): number => {
+    if (!cadence) return 2 // default
+    // Patterns: "4x/week", "daily", "2x/month", "weekly"
+    if (cadence === 'daily') return 1
+    if (cadence === 'weekly') return 7
+    if (cadence.includes('/week')) {
+      const match = cadence.match(/(\d+)x\/week/)
+      if (match) {
+        const perWeek = parseInt(match[1])
+        return Math.ceil(7 / perWeek)
+      }
+    }
+    if (cadence.includes('/month')) {
+      const match = cadence.match(/(\d+)x\/month/)
+      if (match) {
+        const perMonth = parseInt(match[1])
+        return Math.ceil(30 / perMonth)
+      }
+    }
+    return 2 // default fallback
+  }
+
+  // Get platforms from selected projects
+  const getSelectedPlatforms = (): PlatformConfig[] => {
+    const platforms: PlatformConfig[] = []
+    for (const projectId of selectedProjects) {
+      const project = projects.find(p => p.id === projectId)
+      if (project?.platforms) {
+        for (const platform of project.platforms) {
+          if (platform.enabled && !platforms.some(p => p.platform === platform.platform)) {
+            platforms.push(platform)
+          }
+        }
+      }
+    }
+    return platforms
+  }
+
+  // Priority order for scheduling (higher priority = schedule earlier)
+  const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
+
   // Bulk actions
-  const handleAutoDistribute = async (cadenceDays: number) => {
+  const handleAutoDistribute = async () => {
     const unscheduled = content.filter(c => !c.scheduledFor && c.status !== 'published')
     if (unscheduled.length === 0) {
       toast.info('No Content to Schedule', 'All content is already scheduled')
       return
     }
 
-    // Distribute starting from tomorrow
+    // Get platform configs for cadence
+    const platformConfigs = getSelectedPlatforms()
+    
+    // Get already scheduled content to find occupied dates
+    const scheduled = content.filter(c => c.scheduledFor)
+    
+    // Build map of occupied dates per platform
+    const occupiedDates: Record<string, Set<string>> = {}
+    for (const item of scheduled) {
+      if (!occupiedDates[item.platform]) {
+        occupiedDates[item.platform] = new Set()
+      }
+      const dateKey = new Date(item.scheduledFor!).toISOString().split('T')[0]
+      occupiedDates[item.platform].add(dateKey)
+    }
+    
+    // Group unscheduled content by platform and sort by priority
+    const byPlatform: Record<string, typeof unscheduled> = {}
+    for (const item of unscheduled) {
+      if (!byPlatform[item.platform]) {
+        byPlatform[item.platform] = []
+      }
+      byPlatform[item.platform].push(item)
+    }
+    
+    // Sort each platform's content by priority (urgent first)
+    for (const platform of Object.keys(byPlatform)) {
+      byPlatform[platform].sort((a, b) => 
+        (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2)
+      )
+    }
+
+    // Distribute each platform's content based on its cadence, skipping occupied dates
+    let totalScheduled = 0
     const startDate = new Date()
     startDate.setDate(startDate.getDate() + 1)
     startDate.setHours(10, 0, 0, 0)
 
-    let currentDate = new Date(startDate)
+    for (const [platform, items] of Object.entries(byPlatform)) {
+      const config = platformConfigs.find(p => p.platform === platform)
+      const cadenceDays = parseCadenceToDays(config?.cadence)
+      const occupied = occupiedDates[platform] || new Set()
+      
+      let currentDate = new Date(startDate)
+      let attempts = 0
+      const maxAttempts = 365 // Don't look more than a year ahead
 
-    for (const item of unscheduled) {
-      try {
-        await fetch(`/api/content/${item.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            scheduledFor: currentDate.toISOString(),
-            status: item.status === 'approved' ? 'scheduled' : item.status,
-          }),
-        })
-      } catch (error) {
-        console.error(`Failed to schedule ${item.id}:`, error)
+      for (const item of items) {
+        // Find next available slot for this platform
+        while (attempts < maxAttempts) {
+          const dateKey = currentDate.toISOString().split('T')[0]
+          if (!occupied.has(dateKey)) {
+            // Found an available slot
+            break
+          }
+          // Skip to next day and try again
+          currentDate.setDate(currentDate.getDate() + 1)
+          attempts++
+        }
+        
+        if (attempts >= maxAttempts) {
+          console.error(`Could not find slot for ${item.id}`)
+          continue
+        }
+
+        try {
+          const scheduledFor = currentDate.toISOString()
+          await fetch(`/api/content/${item.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              scheduledFor,
+              status: item.status === 'approved' ? 'scheduled' : item.status,
+            }),
+          })
+          totalScheduled++
+          
+          // Mark this date as occupied
+          const dateKey = currentDate.toISOString().split('T')[0]
+          occupied.add(dateKey)
+        } catch (error) {
+          console.error(`Failed to schedule ${item.id}:`, error)
+        }
+
+        // Move forward by cadence days for next item
+        currentDate.setDate(currentDate.getDate() + cadenceDays)
+        attempts = 0
       }
-
-      currentDate.setDate(currentDate.getDate() + cadenceDays)
     }
 
-    toast.success('Content Distributed', `${unscheduled.length} items scheduled`)
+    toast.success('Content Distributed', `${totalScheduled} items scheduled based on project cadence`)
     await fetchData()
   }
 
@@ -438,6 +575,7 @@ function ContentPageContent() {
           <div className="mb-6">
             <ContentActions
               content={content}
+              platforms={getSelectedPlatforms()}
               onAutoDistribute={handleAutoDistribute}
               onScheduleApproved={handleScheduleApproved}
               onBulkApprove={handleBulkApprove}
@@ -703,6 +841,7 @@ function ContentPageContent() {
         onStatusChange={handleStatusChange}
         onUpdate={handleUpdateContent}
         onDelete={handleDeleteContent}
+        onAddComment={handleAddComment}
       />
 
       {/* Preview Schedule Modal */}

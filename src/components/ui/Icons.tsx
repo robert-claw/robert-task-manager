@@ -54,6 +54,7 @@ import {
   Video,
   File,
   Link,
+  Link2Off,
   Hash,
   AtSign,
   MessageSquare,
@@ -88,6 +89,8 @@ export const PlatformIcons: Record<string, LucideIcon> = {
   blog: BookOpen,
   instagram: Instagram,
   facebook: Users,
+  nostr: Zap,
+  medium: PenTool,
 }
 
 // Navigation Icons mapping
@@ -164,6 +167,8 @@ export {
   Video,
   File,
   Link,
+  Link2Off,
+  Link2Off as Unlink,
   Hash,
   AtSign,
   MessageSquare,
