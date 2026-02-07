@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Calendar, Clock, AlertTriangle } from 'lucide-react'
 import { PlatformIcon, LoadingSpinner } from '@/components/ui/Icons'
+import { TagInput } from '@/components/ui/TagInput'
 
 interface Project {
   id: string
@@ -24,6 +25,7 @@ export interface ContentFormData {
   type: string
   title: string
   content: string
+  hashtags?: string[]
   scheduledFor?: string
   priority: string
   submitForReview: boolean
@@ -57,6 +59,7 @@ export function NewContentModal({ isOpen, onClose, onSubmit, projects }: NewCont
     type: 'post',
     title: '',
     content: '',
+    hashtags: [],
     scheduledFor: '',
     priority: 'medium',
     submitForReview: false,
@@ -271,6 +274,19 @@ export function NewContentModal({ isOpen, onClose, onSubmit, projects }: NewCont
                     </span>
                   )}
                 </div>
+              </div>
+
+              {/* Hashtags */}
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">
+                  Hashtags (Optional)
+                </label>
+                <TagInput
+                  tags={formData.hashtags || []}
+                  onChange={(tags) => setFormData(prev => ({ ...prev, hashtags: tags }))}
+                  placeholder="Add hashtag..."
+                  maxTags={5}
+                />
               </div>
 
               {/* Scheduled Date/Time */}
