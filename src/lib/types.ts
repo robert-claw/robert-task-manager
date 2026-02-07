@@ -16,6 +16,9 @@ export type ContentType = 'post' | 'article' | 'tweet' | 'thread' | 'story' | 'r
 // Priority levels
 export type Priority = 'low' | 'medium' | 'high' | 'urgent'
 
+// Project type
+export type ProjectType = 'business' | 'personal'
+
 // Project interface
 export interface Project {
   id: string
@@ -24,6 +27,7 @@ export interface Project {
   description: string
   icon: string
   color: string
+  type?: ProjectType  // business vs personal brand
   platforms: PlatformConfig[]
   marketingPlan: MarketingPlan
   settings: ProjectSettings
@@ -103,6 +107,8 @@ export interface ContentItem {
   title: string
   content: string
   media?: MediaAttachment[]
+  linkUrl?: string  // Link to blog post, landing page, etc.
+  linkText?: string  // CTA text for the link
   status: ContentStatus
   priority: Priority
   scheduledFor?: string

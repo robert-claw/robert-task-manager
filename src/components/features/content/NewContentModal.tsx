@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Plus, Calendar, Clock, AlertTriangle } from 'lucide-react'
+import { X, Plus, Calendar, Clock, AlertTriangle, Upload, Image as ImageIcon, Link as LinkIcon, Trash2 } from 'lucide-react'
 import { PlatformIcon, LoadingSpinner } from '@/components/ui/Icons'
 import { TagInput } from '@/components/ui/TagInput'
 
@@ -19,12 +19,23 @@ interface NewContentModalProps {
   projects: Project[]
 }
 
+interface MediaAttachment {
+  id: string
+  type: 'image' | 'video' | 'document'
+  url: string
+  filename: string
+  mimeType: string
+}
+
 export interface ContentFormData {
   projectId: string
   platform: string
   type: string
   title: string
   content: string
+  media?: MediaAttachment[]
+  linkUrl?: string
+  linkText?: string
   hashtags?: string[]
   scheduledFor?: string
   priority: string
@@ -59,13 +70,18 @@ export function NewContentModal({ isOpen, onClose, onSubmit, projects }: NewCont
     type: 'post',
     title: '',
     content: '',
+    media: [],
+    linkUrl: '',
+    linkText: '',
     hashtags: [],
     scheduledFor: '',
     priority: 'medium',
     submitForReview: false,
   })
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,6 +107,10 @@ export function NewContentModal({ isOpen, onClose, onSubmit, projects }: NewCont
         type: 'post',
         title: '',
         content: '',
+        media: [],
+        linkUrl: '',
+        linkText: '',
+        hashtags: [],
         scheduledFor: '',
         priority: 'medium',
         submitForReview: false,
@@ -109,6 +129,49 @@ export function NewContentModal({ isOpen, onClose, onSubmit, projects }: NewCont
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Upload failed')
+      }
+
+      const data = await response.json()
+      
+      setFormData(prev => ({
+        ...prev,
+        media: [...(prev.media || []), data.file]
+      }))
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert(error instanceof Error ? error.message : 'Failed to upload file')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleRemoveMedia = (mediaId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      media: prev.media?.filter(m => m.id !== mediaId)
+    }))
   }
 
   // Handle ESC key
@@ -274,6 +337,97 @@ export function NewContentModal({ isOpen, onClose, onSubmit, projects }: NewCont
                     </span>
                   )}
                 </div>
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">
+                  <span className="flex items-center gap-2">
+                    <ImageIcon size={14} />
+                    Images (Optional)
+                  </span>
+                </label>
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                
+                <div className="space-y-3">
+                  {formData.media && formData.media.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3">
+                      {formData.media.map((media) => (
+                        <div key={media.id} className="relative group">
+                          <img
+                            src={media.url}
+                            alt={media.filename}
+                            className="w-full h-32 object-cover rounded-lg border border-slate-700"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMedia(media.id)}
+                            className="absolute top-2 right-2 p-1.5 bg-red-500/90 hover:bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="w-full border-2 border-dashed border-slate-700 rounded-lg p-6 hover:border-cyan-500 hover:bg-slate-800/50 transition-colors disabled:opacity-50 flex flex-col items-center gap-2 text-slate-400 hover:text-cyan-400"
+                  >
+                    {uploading ? (
+                      <>
+                        <LoadingSpinner size={24} />
+                        <span className="text-sm">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={24} />
+                        <span className="text-sm font-medium">Click to upload image</span>
+                        <span className="text-xs">PNG, JPG, GIF, WebP (max 10MB)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Link to Blog/Website */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-slate-400">
+                  <span className="flex items-center gap-2">
+                    <LinkIcon size={14} />
+                    Link (Optional)
+                  </span>
+                </label>
+                
+                <input
+                  type="url"
+                  value={formData.linkUrl}
+                  onChange={(e) => handleChange('linkUrl', e.target.value)}
+                  placeholder="https://robert-claw.com/blog/post-slug"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+                
+                <input
+                  type="text"
+                  value={formData.linkText}
+                  onChange={(e) => handleChange('linkText', e.target.value)}
+                  placeholder="Link text (e.g., 'Read more on my blog')"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+                
+                <p className="text-xs text-slate-500">
+                  Add a link to drive traffic to your blog or website
+                </p>
               </div>
 
               {/* Hashtags */}
