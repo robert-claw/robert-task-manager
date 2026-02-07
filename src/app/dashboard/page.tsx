@@ -8,6 +8,7 @@ import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { LoadingPage } from '@/components/ui/Loading'
 import { ContentDetailModal } from '@/components/features/content/ContentDetailModal'
 import { NewContentModal, ContentFormData } from '@/components/features/content/NewContentModal'
+import { NewProjectModal, NewProjectData } from '@/components/features/projects/NewProjectModal'
 import {
   PlatformIcon,
   Bell,
@@ -158,6 +159,7 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true)
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
   const [showNewContentModal, setShowNewContentModal] = useState(false)
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false)
   const [statsModal, setStatsModal] = useState<{
     isOpen: boolean
     title: string
@@ -220,6 +222,51 @@ function DashboardContent() {
       await fetchData()
     } catch (error) {
       toast.error('Failed to create content')
+      throw error
+    }
+  }
+
+  // Create new project
+  const handleCreateProject = async (data: NewProjectData) => {
+    try {
+      const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          slug,
+          description: data.description,
+          icon: data.icon,
+          color: data.color,
+          platforms: data.platforms.map(p => ({
+            platform: p,
+            enabled: true,
+            connectionStatus: 'pending',
+            cadence: '3x/week',
+          })),
+          marketingPlan: {
+            goals: [],
+            targetAudience: '',
+            contentPillars: [],
+            notes: '',
+          },
+          settings: {
+            timezone: 'UTC',
+            defaultAssignee: 'leon',
+            autoSchedule: false,
+          },
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to create project')
+
+      const newProject = await res.json()
+      toast.success('Project Created', `${data.name} is ready to use`)
+      await fetchData()
+      setSelectedProject(newProject.id)
+    } catch (error) {
+      toast.error('Failed to create project')
       throw error
     }
   }
@@ -346,6 +393,7 @@ function DashboardContent() {
         projects={projects}
         selectedProject={selectedProject}
         onProjectChange={setSelectedProject}
+        onCreateProject={() => setShowNewProjectModal(true)}
       />
 
       <main className="flex-1 p-6 overflow-auto">
@@ -778,6 +826,13 @@ function DashboardContent() {
           setStatsModal(prev => ({ ...prev, isOpen: false }))
           setSelectedContent(item)
         }}
+      />
+
+      {/* New Project Modal */}
+      <NewProjectModal
+        isOpen={showNewProjectModal}
+        onClose={() => setShowNewProjectModal(false)}
+        onSave={handleCreateProject}
       />
     </div>
   )
