@@ -1,66 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { loadTemplates, createTemplate, getTemplatesByProject, getTemplatesByPlatform } from '@/lib/templates'
-import { Platform, ContentType } from '@/lib/types'
+import { prisma } from '@/lib/prisma'
 
-// GET /api/templates - List templates with optional filters
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const projectId = searchParams.get('projectId')
     const platform = searchParams.get('platform')
     
-    let templates = loadTemplates()
+    const where: any = {}
+    if (projectId) where.projectId = projectId
+    if (platform) where.platform = platform
     
-    if (projectId) {
-      templates = templates.filter(t => t.projectId === projectId)
-    }
-    if (platform) {
-      templates = templates.filter(t => t.platform === platform)
-    }
+    const templates = await prisma.template.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          }
+        }
+      }
+    })
     
-    // Sort by usageCount descending (most used first)
-    templates.sort((a, b) => b.usageCount - a.usageCount)
+    const templatesWithParsedFields = templates.map(template => ({
+      ...template,
+      placeholders: JSON.parse(template.placeholders),
+    }))
     
-    return NextResponse.json({ templates })
+    return NextResponse.json({ templates: templatesWithParsedFields })
   } catch (error) {
     console.error('Failed to get templates:', error)
-    return NextResponse.json(
-      { error: 'Failed to load templates' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to load templates' }, { status: 500 })
   }
 }
 
-// POST /api/templates - Create new template
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
     
-    if (!data.projectId || !data.name || !data.platform || !data.structure) {
-      return NextResponse.json(
-        { error: 'Missing required fields: projectId, name, platform, structure' },
-        { status: 400 }
-      )
-    }
-
-    const template = createTemplate({
-      projectId: data.projectId,
-      name: data.name,
-      description: data.description || '',
-      platform: data.platform as Platform,
-      type: (data.type as ContentType) || 'post',
-      structure: data.structure,
-      variables: data.variables || [],
-      hashtags: data.hashtags || [],
-      bestPractices: data.bestPractices || [],
+    const template = await prisma.template.create({
+      data: {
+        id: Date.now().toString(),
+        projectId: data.projectId,
+        name: data.name,
+        description: data.description || null,
+        platform: data.platform,
+        funnelStage: data.funnelStage || null,
+        structure: data.structure,
+        placeholders: JSON.stringify(data.placeholders || []),
+        useCount: 0,
+        createdBy: data.createdBy || 'robert',
+      },
     })
 
-    return NextResponse.json({ template }, { status: 201 })
+    return NextResponse.json({
+      template: {
+        ...template,
+        placeholders: JSON.parse(template.placeholders),
+      }
+    }, { status: 201 })
   } catch (error) {
     console.error('Failed to create template:', error)
-    return NextResponse.json(
-      { error: 'Failed to create template' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create template' }, { status: 500 })
   }
 }

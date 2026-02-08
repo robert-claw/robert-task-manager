@@ -1,62 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { loadHashtagGroups, createHashtagGroup, getHashtagGroupsByProject, getHashtagGroupsByPlatform } from '@/lib/hashtags'
-import { Platform } from '@/lib/types'
+import { prisma } from '@/lib/prisma'
 
-// GET /api/hashtags - List hashtag groups with optional filters
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const projectId = searchParams.get('projectId')
     const platform = searchParams.get('platform')
     
-    let groups = loadHashtagGroups()
+    const where: any = {}
+    if (projectId) where.projectId = projectId
+    if (platform) where.platform = platform
     
-    if (projectId) {
-      groups = groups.filter(g => g.projectId === projectId)
-    }
-    if (platform) {
-      groups = groups.filter(g => g.platform === platform)
-    }
+    const hashtags = await prisma.hashtag.findMany({
+      where,
+      orderBy: { useCount: 'desc' },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          }
+        }
+      }
+    })
     
-    // Sort by usageCount descending
-    groups.sort((a, b) => b.usageCount - a.usageCount)
+    const hashtagsWithParsedFields = hashtags.map(hashtag => ({
+      ...hashtag,
+      performance: hashtag.performance ? JSON.parse(hashtag.performance) : null,
+    }))
     
-    return NextResponse.json({ hashtagGroups: groups })
+    return NextResponse.json({ hashtags: hashtagsWithParsedFields })
   } catch (error) {
-    console.error('Failed to get hashtag groups:', error)
-    return NextResponse.json(
-      { error: 'Failed to load hashtag groups' },
-      { status: 500 }
-    )
+    console.error('Failed to get hashtags:', error)
+    return NextResponse.json({ error: 'Failed to load hashtags' }, { status: 500 })
   }
 }
 
-// POST /api/hashtags - Create new hashtag group
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
     
-    if (!data.projectId || !data.name || !data.platform || !data.hashtags) {
-      return NextResponse.json(
-        { error: 'Missing required fields: projectId, name, platform, hashtags' },
-        { status: 400 }
-      )
-    }
-
-    const group = createHashtagGroup({
-      projectId: data.projectId,
-      name: data.name,
-      description: data.description || '',
-      platform: data.platform as Platform,
-      hashtags: data.hashtags,
+    const hashtag = await prisma.hashtag.create({
+      data: {
+        id: Date.now().toString(),
+        projectId: data.projectId,
+        tag: data.tag,
+        category: data.category || null,
+        platform: data.platform,
+        useCount: data.useCount || 0,
+        performance: data.performance ? JSON.stringify(data.performance) : null,
+      },
     })
 
-    return NextResponse.json({ hashtagGroup: group }, { status: 201 })
+    return NextResponse.json({
+      hashtag: {
+        ...hashtag,
+        performance: hashtag.performance ? JSON.parse(hashtag.performance) : null,
+      }
+    }, { status: 201 })
   } catch (error) {
-    console.error('Failed to create hashtag group:', error)
-    return NextResponse.json(
-      { error: 'Failed to create hashtag group' },
-      { status: 500 }
-    )
+    console.error('Failed to create hashtag:', error)
+    return NextResponse.json({ error: 'Failed to create hashtag' }, { status: 500 })
   }
 }

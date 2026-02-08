@@ -1,99 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCampaignById, updateCampaign, deleteCampaign, addContentToCampaign, removeContentFromCampaign } from '@/lib/campaigns'
+import { prisma } from '@/lib/prisma'
 
-// GET /api/campaigns/[id] - Get single campaign
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const campaign = getCampaignById(id)
+    const campaign = await prisma.campaign.findUnique({
+      where: { id },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          }
+        }
+      }
+    })
     
     if (!campaign) {
-      return NextResponse.json(
-        { error: 'Campaign not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
     
-    return NextResponse.json({ campaign })
+    return NextResponse.json({
+      campaign: {
+        ...campaign,
+        goals: JSON.parse(campaign.goals),
+        metrics: campaign.metrics ? JSON.parse(campaign.metrics) : null,
+        contentIds: JSON.parse(campaign.contentIds),
+      }
+    })
   } catch (error) {
     console.error('Failed to get campaign:', error)
-    return NextResponse.json(
-      { error: 'Failed to get campaign' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to get campaign' }, { status: 500 })
   }
 }
 
-// PATCH /api/campaigns/[id] - Update campaign
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const updates = await request.json()
     
-    // Handle special actions
-    if (updates.action === 'addContent' && updates.contentId) {
-      const campaign = addContentToCampaign(id, updates.contentId)
-      if (!campaign) {
-        return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
+    const updateData: any = {}
+    if (updates.name !== undefined) updateData.name = updates.name
+    if (updates.description !== undefined) updateData.description = updates.description
+    if (updates.status !== undefined) updateData.status = updates.status
+    if (updates.startDate !== undefined) updateData.startDate = updates.startDate ? new Date(updates.startDate) : null
+    if (updates.endDate !== undefined) updateData.endDate = updates.endDate ? new Date(updates.endDate) : null
+    if (updates.goals !== undefined) updateData.goals = JSON.stringify(updates.goals)
+    if (updates.metrics !== undefined) updateData.metrics = JSON.stringify(updates.metrics)
+    if (updates.contentIds !== undefined) updateData.contentIds = JSON.stringify(updates.contentIds)
+    
+    const campaign = await prisma.campaign.update({
+      where: { id },
+      data: updateData,
+    })
+    
+    return NextResponse.json({
+      campaign: {
+        ...campaign,
+        goals: JSON.parse(campaign.goals),
+        metrics: campaign.metrics ? JSON.parse(campaign.metrics) : null,
+        contentIds: JSON.parse(campaign.contentIds),
       }
-      return NextResponse.json({ campaign })
-    }
-    
-    if (updates.action === 'removeContent' && updates.contentId) {
-      const campaign = removeContentFromCampaign(id, updates.contentId)
-      if (!campaign) {
-        return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
-      }
-      return NextResponse.json({ campaign })
-    }
-    
-    const campaign = updateCampaign(id, updates)
-    
-    if (!campaign) {
-      return NextResponse.json(
-        { error: 'Campaign not found' },
-        { status: 404 }
-      )
-    }
-    
-    return NextResponse.json({ campaign })
+    })
   } catch (error) {
     console.error('Failed to update campaign:', error)
-    return NextResponse.json(
-      { error: 'Failed to update campaign' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to update campaign' }, { status: 500 })
   }
 }
 
-// DELETE /api/campaigns/[id] - Delete campaign
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const deleted = deleteCampaign(id)
-    
-    if (!deleted) {
-      return NextResponse.json(
-        { error: 'Campaign not found' },
-        { status: 404 }
-      )
-    }
+    await prisma.campaign.delete({
+      where: { id },
+    })
     
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Failed to delete campaign:', error)
-    return NextResponse.json(
-      { error: 'Failed to delete campaign' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to delete campaign' }, { status: 500 })
   }
 }
