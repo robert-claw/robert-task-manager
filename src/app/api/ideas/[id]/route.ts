@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth-server'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -7,6 +8,8 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    await requireAuth()
+    
     const { id } = await params
     const idea = await prisma.idea.findUnique({
       where: { id },
@@ -32,6 +35,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to get idea:', error)
     return NextResponse.json({ error: 'Failed to get idea' }, { status: 500 })
   }
@@ -39,6 +45,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    await requireAuth()
+    
     const { id } = await params
     const updates = await request.json()
     
@@ -64,6 +72,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
     })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to update idea:', error)
     return NextResponse.json({ error: 'Failed to update idea' }, { status: 500 })
   }
@@ -71,6 +82,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    await requireAuth()
+    
     const { id } = await params
     await prisma.idea.delete({
       where: { id },
@@ -78,6 +91,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     
     return NextResponse.json({ success: true })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to delete idea:', error)
     return NextResponse.json({ error: 'Failed to delete idea' }, { status: 500 })
   }

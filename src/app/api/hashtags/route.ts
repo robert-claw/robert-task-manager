@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth-server'
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAuth()
+    
     const searchParams = request.nextUrl.searchParams
     const projectId = searchParams.get('projectId')
     const platform = searchParams.get('platform')
@@ -32,6 +35,9 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ hashtags: hashtagsWithParsedFields })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to get hashtags:', error)
     return NextResponse.json({ error: 'Failed to load hashtags' }, { status: 500 })
   }
@@ -39,6 +45,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth()
+    
     const data = await request.json()
     
     const hashtag = await prisma.hashtag.create({
@@ -60,6 +68,9 @@ export async function POST(request: NextRequest) {
       }
     }, { status: 201 })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to create hashtag:', error)
     return NextResponse.json({ error: 'Failed to create hashtag' }, { status: 500 })
   }

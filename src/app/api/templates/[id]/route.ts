@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth-server'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -7,6 +8,8 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    await requireAuth()
+    
     const { id } = await params
     const template = await prisma.template.findUnique({
       where: { id },
@@ -32,6 +35,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to get template:', error)
     return NextResponse.json({ error: 'Failed to get template' }, { status: 500 })
   }
@@ -39,6 +45,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    await requireAuth()
+    
     const { id } = await params
     const updates = await request.json()
     
@@ -63,6 +71,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
     })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to update template:', error)
     return NextResponse.json({ error: 'Failed to update template' }, { status: 500 })
   }
@@ -70,6 +81,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    await requireAuth()
+    
     const { id } = await params
     await prisma.template.delete({
       where: { id },
@@ -77,6 +90,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     
     return NextResponse.json({ success: true })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to delete template:', error)
     return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 })
   }

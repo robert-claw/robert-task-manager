@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth-server'
 
 // GET /api/content - List content with optional filters
 export async function GET(request: NextRequest) {
   try {
+    await requireAuth()
+    
     const searchParams = request.nextUrl.searchParams
     const projectId = searchParams.get('projectId')
     const status = searchParams.get('status')
@@ -41,6 +44,9 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ content: contentWithParsedFields })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to get content:', error)
     return NextResponse.json(
       { error: 'Failed to load content' },
@@ -52,6 +58,8 @@ export async function GET(request: NextRequest) {
 // POST /api/content - Create new content
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth()
+    
     const data = await request.json()
     
     if (!data.projectId || !data.title || !data.platform) {
@@ -104,6 +112,9 @@ export async function POST(request: NextRequest) {
       }
     }, { status: 201 })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to create content:', error)
     return NextResponse.json(
       { error: 'Failed to create content' },

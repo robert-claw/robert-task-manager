@@ -15,7 +15,22 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24, // Refresh daily
   },
   trustedOrigins: ['http://localhost:3030', 'https://task-manager.robert-claw.com'],
+  user: {
+    additionalFields: {
+      role: {
+        type: 'string',
+        defaultValue: 'user',
+        required: false,
+      }
+    }
+  }
 })
 
-export type Session = typeof auth.$Infer.Session.session
-export type User = typeof auth.$Infer.Session.user
+export type Session = typeof auth.$Infer.Session.session & {
+  user: typeof auth.$Infer.Session.user & {
+    role: string
+  }
+}
+export type User = typeof auth.$Infer.Session.user & {
+  role: string
+}

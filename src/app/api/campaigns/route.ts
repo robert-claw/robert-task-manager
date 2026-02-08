@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth-server'
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAuth()
+    
     const searchParams = request.nextUrl.searchParams
     const projectId = searchParams.get('projectId')
     
@@ -32,6 +35,9 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ campaigns: campaignsWithParsedFields })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to get campaigns:', error)
     return NextResponse.json({ error: 'Failed to load campaigns' }, { status: 500 })
   }
@@ -39,6 +45,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth()
+    
     const data = await request.json()
     
     const campaign = await prisma.campaign.create({
@@ -65,6 +73,9 @@ export async function POST(request: NextRequest) {
       }
     }, { status: 201 })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to create campaign:', error)
     return NextResponse.json({ error: 'Failed to create campaign' }, { status: 500 })
   }

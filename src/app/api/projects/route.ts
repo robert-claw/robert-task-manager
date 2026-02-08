@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/auth-server'
 
 // GET /api/projects - List all projects
 export async function GET() {
   try {
+    await requireAuth()
+    
     const projects = await prisma.project.findMany({
       orderBy: { createdAt: 'desc' },
     })
@@ -18,6 +21,9 @@ export async function GET() {
     
     return NextResponse.json({ projects: projectsWithParsedFields })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to get projects:', error)
     return NextResponse.json(
       { error: 'Failed to load projects' },
@@ -29,6 +35,8 @@ export async function GET() {
 // POST /api/projects - Create a new project
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth()
+    
     const data = await request.json()
     
     if (!data.name || !data.slug) {
@@ -70,6 +78,9 @@ export async function POST(request: NextRequest) {
       }
     }, { status: 201 })
   } catch (error) {
+    if ((error as Error).message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     console.error('Failed to create project:', error)
     return NextResponse.json(
       { error: 'Failed to create project' },
