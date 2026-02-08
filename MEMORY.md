@@ -150,6 +150,24 @@ Personal roadmap documented in `ROADMAP.md`.
 - **Commits:** 0271bcd, 6ec69e6, 5fd2a6e
 - **Docs:** `/root/.openclaw/workspace/memory/2026-02-07-liberture-phase2.md`
 
+### Liberture - Goodreads Crawler System (Feb 8, 2026)
+- **Implementation Time:** 2 hours
+- **Status:** ✅ COMPLETE
+- **Added:** Author-book relationships with database foreign keys
+- **Added:** `category` field to Person (author, practitioner, etc.)
+- **Added:** `goodreadsUrl` field to Book model
+- **Built:** 4 scripts (link authors, enrich Goodreads URLs, crawler V1, crawler V2)
+- **Crawled:** 5 Goodreads lists (biohacking shelf, author pages, curated lists)
+- **Results:**
+  - 85 books total (was 35, added 50)
+  - 58 authors total (was 35, added 23)
+  - All books linked to authors via authorId
+  - 82 books have Goodreads URLs (96%)
+- **Notable books added:** Super Human, Lifespan, Outlive, Boundless, The Circadian Code, Sleep Smarter, Limitless, Becoming Supernatural, The Longevity Diet, The Obesity Code
+- **New authors:** David A. Sinclair, Satchin Panda, Shawn Stevenson, Jim Kwik, Joe Dispenza, Valter Longo, Jason Fung, Scott Carney, and 15 more
+- **Commits:** d10c761, fb4fe68
+- **Docs:** `/root/.openclaw/workspace/memory/2026-02-08-goodreads-crawler-complete.md`
+
 ### Liberture - Real Perplexity Enrichment System (Feb 8, 2026)
 - **Implementation Time:** 45 minutes
 - **Status:** ✅ LIVE AND WORKING
