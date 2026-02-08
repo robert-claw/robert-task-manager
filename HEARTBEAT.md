@@ -137,7 +137,22 @@ If content has changes requested:
 2. Update the content accordingly
 3. Set status back to ready_for_review
 
-## 7. Liberture Content Population (1x daily)
+## 7. Enrichment Queue Processing (2-3x daily)
+
+Process pending enrichments for Liberture directory:
+
+```bash
+node /root/.openclaw/workspace/scripts/process-enrichment-queue.ts
+```
+
+**Only run if:**
+- There are pending enrichments in queue
+- Last processing was >4 hours ago
+- It's not late night (23:00-06:00)
+
+Track in heartbeat-state.json under "lastEnrichmentProcessing"
+
+## 8. Liberture Content Population (1x daily)
 
 Add 1-2 knowledge articles per heartbeat using context liberture:
 
