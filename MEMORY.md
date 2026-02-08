@@ -150,6 +150,28 @@ Personal roadmap documented in `ROADMAP.md`.
 - **Commits:** 0271bcd, 6ec69e6, 5fd2a6e
 - **Docs:** `/root/.openclaw/workspace/memory/2026-02-07-liberture-phase2.md`
 
+### Liberture - Real Perplexity Enrichment System (Feb 8, 2026)
+- **Implementation Time:** 45 minutes
+- **Status:** ✅ LIVE AND WORKING
+- **Added:** PERPLEXITY_API_KEY to .env.local
+- **Updated:** Enrichment API route to use Perplexity 'sonar' model
+- **Fixed:** Next.js 16 async params handling (params is now a Promise)
+- **Features:**
+  - Detailed prompts for people/books/organizations
+  - Wikipedia URL verification (HTTP HEAD)
+  - Low temperature (0.1) for factual accuracy
+  - JSON extraction from markdown responses
+  - Comprehensive error handling
+  - EnrichmentLog database tracking
+- **Test Results:**
+  - Timothy Ferriss: Wikipedia + 5 books + 6 achievements
+  - Michael Greger: Wikipedia + 10 publications + 6 speaking events + 8 achievements
+  - James Clear: Wikipedia + Atomic Habits + 7 achievements
+- **Database State:** 6 enriched, 34 remaining (out of 40 people)
+- **Cost:** ~$0.0005 per enrichment (~2 cents for all 34 remaining)
+- **Commit:** 468afd0
+- **Docs:** `/root/.openclaw/workspace/memory/2026-02-08-perplexity-enrichment-live.md`
+
 ### Robert Blog - Roadmap & Laws Pages (Feb 7, 2026)
 - Created /roadmap page with 4-phase evolution plan
 - Created /laws page with 3 fundamental constraints
