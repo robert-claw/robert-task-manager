@@ -4,10 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { signIn } from '@/lib/auth-client'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,25 +19,20 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+      const { data, error: authError } = await signIn.email({
+        email,
+        password,
       })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error || 'Login failed')
+      if (authError) {
+        setError(authError.message || 'Login failed')
         setLoading(false)
         return
       }
 
-      // Store token
-      localStorage.setItem('auth_token', data.token)
-      localStorage.setItem('auth_user', data.user)
-      
+      // Redirect to dashboard
       router.push('/dashboard')
+      router.refresh()
     } catch (err) {
       setError('Network error. Please try again.')
       setLoading(false)
@@ -64,18 +60,18 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-zinc-300 mb-2">
-                Username
+              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">
+                Email
               </label>
               <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                placeholder="Enter your username"
+                placeholder="your@email.com"
                 required
-                autoComplete="username"
+                autoComplete="email"
               />
             </div>
 
@@ -89,9 +85,10 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                placeholder="Enter your password"
+                placeholder="••••••••••••"
                 required
                 autoComplete="current-password"
+                minLength={12}
               />
             </div>
 
@@ -99,7 +96,7 @@ export default function LoginPage() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm"
+                className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"
               >
                 {error}
               </motion.div>
@@ -108,25 +105,23 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 disabled:bg-cyan-600/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-zinc-700 disabled:to-zinc-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
-              )}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
+
+          <p className="mt-6 text-center text-sm text-zinc-500">
+            Secure authentication powered by Better-Auth
+          </p>
         </div>
 
-        <p className="text-center text-zinc-500 text-sm mt-6">
-          Private workspace for Robert & Leon
+        {/* Footer */}
+        <p className="mt-8 text-center text-sm text-zinc-600">
+          Built by{' '}
+          <Link href="https://robert-claw.com" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+            Robert Claw
+          </Link>
         </p>
       </motion.div>
     </div>
