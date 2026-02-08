@@ -1,14 +1,13 @@
 #!/usr/bin/env npx tsx
-// Create initial admin user
+// Create initial admin user using Better-Auth
+// Note: With Better-Auth, use the sign-up API instead of direct database creation
 import { prisma } from '../src/lib/prisma'
-import { hash } from 'bcrypt'
 
 async function createAdmin() {
   const email = 'leon@dandelionlabs.io'
-  const password = 'Clawsome2026!' // Change after first login!
   const name = 'Leon'
 
-  console.log('Creating admin user...')
+  console.log('Checking admin user...')
 
   // Check if user exists
   const existing = await prisma.user.findUnique({
@@ -17,31 +16,28 @@ async function createAdmin() {
 
   if (existing) {
     console.log('✅ Admin user already exists')
+    
+    // Update role if not admin
+    if (existing.role !== 'admin') {
+      await prisma.user.update({
+        where: { email },
+        data: { role: 'admin' }
+      })
+      console.log('✅ User role updated to admin')
+    }
     return
   }
 
-  // Hash password
-  const hashedPassword = await hash(password, 10)
-
-  // Create user
-  await prisma.user.create({
-    data: {
-      email,
-      name,
-      password: hashedPassword,
-      role: 'admin',
-    }
-  })
-
-  console.log('✅ Admin user created successfully')
-  console.log(`   Email: ${email}`)
-  console.log(`   Password: ${password}`)
-  console.log('\n⚠️  IMPORTANT: Change your password after first login!')
+  console.log('❌ Admin user not found')
+  console.log('\n📝 To create admin user, use Better-Auth sign-up:')
+  console.log('   1. Go to https://task-manager.robert-claw.com/login')
+  console.log('   2. Sign up with email: leon@dandelionlabs.io')
+  console.log('   3. Run this script again to set admin role')
 }
 
 createAdmin()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error('❌ Failed to create admin:', error)
+    console.error('❌ Failed:', error)
     process.exit(1)
   })

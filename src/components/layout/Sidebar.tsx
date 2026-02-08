@@ -218,5 +218,6 @@ export function Sidebar({ projects, selectedProject, onProjectChange, onCreatePr
         </div>
       </div>
     </motion.aside>
+    </>
   )
 }
