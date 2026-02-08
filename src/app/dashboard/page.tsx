@@ -396,16 +396,16 @@ function DashboardContent() {
         onCreateProject={() => setShowNewProjectModal(true)}
       />
 
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-4 md:p-6 overflow-auto pt-16 md:pt-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           {/* Header with Action Summary */}
-          <div className="mb-8">
-            <div className="flex items-start justify-between">
+          <div className="mb-6 md:mb-8">
+            <div className="flex flex-col md:flex-row items-start md:justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
                   Dashboard
                 </h1>
                 <p className="text-slate-400">

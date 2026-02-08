@@ -76,13 +76,36 @@ function ProjectIcon({ icon, className = '' }: { icon: string; className?: strin
 export function Sidebar({ projects, selectedProject, onProjectChange, onCreateProject }: SidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
   
   return (
-    <motion.aside
-      initial={{ width: 256 }}
-      animate={{ width: isCollapsed ? 72 : 256 }}
-      className="h-screen bg-slate-900 border-r border-slate-800 flex flex-col"
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+      
+      {/* Mobile Toggle Button */}
+      <button
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-slate-800 text-white rounded-lg border border-slate-700"
+        aria-label="Toggle menu"
+      >
+        {isMobileOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
+      </button>
+
+      <motion.aside
+        initial={false}
+        animate={{ 
+          width: isCollapsed ? 72 : 256,
+        }}
+        className={`h-screen bg-slate-900 border-r border-slate-800 flex flex-col fixed md:relative z-40 transition-transform ${
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
       {/* Header */}
       <div className="p-4 border-b border-slate-800">
         <div className="flex items-center justify-between">
