@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getProject, updateProject, deleteProject } from '@/lib/projects'
+import { prisma } from '@/lib/prisma'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -9,7 +9,9 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const project = getProject(id)
+    const project = await prisma.project.findUnique({
+      where: { id },
+    })
     
     if (!project) {
       return NextResponse.json(
@@ -18,7 +20,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
     
-    return NextResponse.json({ project })
+    return NextResponse.json({
+      project: {
+        ...project,
+        platforms: JSON.parse(project.platforms),
+        marketingPlan: JSON.parse(project.marketingPlan),
+        settings: JSON.parse(project.settings),
+      }
+    })
   } catch (error) {
     console.error('Failed to get project:', error)
     return NextResponse.json(
@@ -34,16 +43,28 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const { id } = await params
     const updates = await request.json()
     
-    const project = updateProject(id, updates)
+    const project = await prisma.project.update({
+      where: { id },
+      data: {
+        ...(updates.name && { name: updates.name }),
+        ...(updates.description && { description: updates.description }),
+        ...(updates.icon && { icon: updates.icon }),
+        ...(updates.color && { color: updates.color }),
+        ...(updates.type && { type: updates.type }),
+        ...(updates.platforms && { platforms: JSON.stringify(updates.platforms) }),
+        ...(updates.marketingPlan && { marketingPlan: JSON.stringify(updates.marketingPlan) }),
+        ...(updates.settings && { settings: JSON.stringify(updates.settings) }),
+      },
+    })
     
-    if (!project) {
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      )
-    }
-    
-    return NextResponse.json({ project })
+    return NextResponse.json({
+      project: {
+        ...project,
+        platforms: JSON.parse(project.platforms),
+        marketingPlan: JSON.parse(project.marketingPlan),
+        settings: JSON.parse(project.settings),
+      }
+    })
   } catch (error) {
     console.error('Failed to update project:', error)
     return NextResponse.json(
@@ -57,14 +78,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const deleted = deleteProject(id)
-    
-    if (!deleted) {
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      )
-    }
+    await prisma.project.delete({
+      where: { id },
+    })
     
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { loadContent, createContent, getContentByProject, getContentByStatus, getContentByPlatform } from '@/lib/content'
-import { ContentType, Platform, ContentStatus } from '@/lib/types'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/content - List content with optional filters
 export async function GET(request: NextRequest) {
@@ -10,23 +9,37 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const platform = searchParams.get('platform')
     
-    let content = loadContent()
+    const where: any = {}
+    if (projectId) where.projectId = projectId
+    if (status) where.status = status
+    if (platform) where.platform = platform
     
-    // Apply filters
-    if (projectId) {
-      content = content.filter(c => c.projectId === projectId)
-    }
-    if (status) {
-      content = content.filter(c => c.status === status)
-    }
-    if (platform) {
-      content = content.filter(c => c.platform === platform)
-    }
+    const content = await prisma.content.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+            color: true,
+          }
+        }
+      }
+    })
     
-    // Sort by createdAt descending (newest first)
-    content.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    // Parse JSON fields
+    const contentWithParsedFields = content.map(item => ({
+      ...item,
+      comments: JSON.parse(item.comments),
+      mediaUrls: item.mediaUrls ? JSON.parse(item.mediaUrls) : null,
+      linkedContent: item.linkedContent ? JSON.parse(item.linkedContent) : null,
+      engagement: item.engagement ? JSON.parse(item.engagement) : null,
+    }))
     
-    return NextResponse.json({ content })
+    return NextResponse.json({ content: contentWithParsedFields })
   } catch (error) {
     console.error('Failed to get content:', error)
     return NextResponse.json(
@@ -48,19 +61,48 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const content = createContent({
-      projectId: data.projectId,
-      type: (data.type as ContentType) || 'post',
-      platform: data.platform as Platform,
-      title: data.title,
-      content: data.content || '',
-      priority: data.priority,
-      scheduledFor: data.scheduledFor,
-      createdBy: data.createdBy || 'robert',
-      assignee: data.assignee || 'leon',
+    const content = await prisma.content.create({
+      data: {
+        id: Date.now().toString(),
+        projectId: data.projectId,
+        type: data.type || 'post',
+        platform: data.platform,
+        title: data.title,
+        content: data.content || '',
+        status: data.status || 'draft',
+        priority: data.priority || 'medium',
+        scheduledFor: data.scheduledFor ? new Date(data.scheduledFor) : null,
+        publishedAt: data.publishedAt ? new Date(data.publishedAt) : null,
+        funnelStage: data.funnelStage || null,
+        mediaUrls: data.mediaUrls ? JSON.stringify(data.mediaUrls) : null,
+        linkedContent: data.linkedContent ? JSON.stringify(data.linkedContent) : null,
+        engagement: data.engagement ? JSON.stringify(data.engagement) : null,
+        createdBy: data.createdBy || 'robert',
+        assignee: data.assignee || 'leon',
+        comments: JSON.stringify(data.comments || []),
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+            color: true,
+          }
+        }
+      }
     })
 
-    return NextResponse.json({ content }, { status: 201 })
+    return NextResponse.json({
+      content: {
+        ...content,
+        comments: JSON.parse(content.comments),
+        mediaUrls: content.mediaUrls ? JSON.parse(content.mediaUrls) : null,
+        linkedContent: content.linkedContent ? JSON.parse(content.linkedContent) : null,
+        engagement: content.engagement ? JSON.parse(content.engagement) : null,
+      }
+    }, { status: 201 })
   } catch (error) {
     console.error('Failed to create content:', error)
     return NextResponse.json(

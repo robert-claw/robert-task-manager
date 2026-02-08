@@ -236,5 +236,130 @@ Personal roadmap documented in `ROADMAP.md`.
 - **Commit:** 49f2683
 - **Live:** https://robert-claw.com (animated lobster logo in hero)
 
+### Liberture - Favicons + SEO Complete (Feb 8, 2026)
+- **Generated proper favicons:** favicon.ico (32x32) + manifest.json for both Liberture and Robert Blog
+- **Robert Blog:** Lobster logo converted to favicon
+- **SEO Implementation:**
+  - OG tags (title, description, image, type) on all pages
+  - Twitter Cards (summary_large_image)
+  - JSON-LD structured data (Organization, WebSite, Person, Book, Breadcrumb schemas)
+  - Dynamic metadata for person/book/org/protocol pages
+  - OG image: 1200x630 PNG served via CDN
+- **Commits:** 622034f (SEO), 57600b7 (games)
+- **Live:** https://liberture.com (proper favicon + social previews)
+
+### Liberture - SVG Animations + Navbar Redesign (Feb 8, 2026)
+- **Hero Icons:** Added floating (y-axis), breathing (scale), and gentle rotation animations
+- **Pillar Cards:** Staggered entrance animations, individual icon floating
+- **Navbar:** Menu button moved right, single button (Getting Started/Dashboard), dropdown menu
+- **Commit:** 57600b7
+
+### Liberture - Interactive Life Skills Games (Feb 8, 2026)
+- **New Section:** /games page with 6 game cards (2 live, 4 coming soon)
+- **Game Engine:**
+  - Time control system (1x, 5x, 10x, 30x, 60x speed)
+  - Play/pause/reset controls
+  - Day/night cycle with realistic sky colors
+  - Minute-level time precision
+- **GameScene Component:**
+  - Animated character (standing, sleeping states)
+  - Window showing sun/moon/stars
+  - Dynamic indoor lighting responding to user settings
+  - Real-time stats display
+- **"Learn to Sleep" Game (LIVE):**
+  - **Controls:** Bedtime, last meal time, 3-tier light schedule
+  - **Metrics:** Sleep quality, energy, recovery, streak
+  - **Scoring:** Based on bedtime (22-23 optimal), meal timing (3h+ before bed), light management
+  - **Feedback:** Real-time warnings and tips
+  - **Educational:** Sleep hygiene best practices
+- **"Learn to Drink Water" Game (LIVE):**
+  - **One-click action:** Drink 250ml button
+  - **Automated:** Sleep/light schedules from optimal sleep settings
+  - **Metrics:** Hydration %, energy, cognitive performance
+  - **Daily tracking:** Water log with timestamps, 2.5L target
+  - **Mechanics:** Gradual dehydration, warnings at 40%/20%
+  - **Smart tips:** Hourly reminders (morning 500ml, midday check, evening reduction)
+  - **Streak system:** Consecutive good days counter
+- **Coming Soon:** Nutrition, Exercise, Meditation, Finance games
+- **Commits:** 57600b7, 9e95c9f
+- **Docs:** docs/GAMES.md
+- **Live:** https://liberture.com/games + /games/sleep + /games/hydration
+
+### Liberture - Enhanced Directory (Feb 8, 2026)
+- **Complete redesign:** Real-time search + filter tabs
+- **Search:** By name, description, or tags
+- **Filters:** All, People (40), Organizations (4), Protocols (3), Books (35)
+- **Layout:** Grouped sections with 6 items + "View All" links
+- **API Routes:** Created /api/people, /api/organizations, /api/protocols, /api/books
+- **Animations:** Staggered card entrance with Framer Motion
+- **Commit:** f56594c
+- **Live:** https://liberture.com/directory
+
+### Liberture - Component Organization (Feb 8, 2026)
+- **Reorganized structure:**
+  - `components/legal/` - CookieConsent
+  - `components/seo/` - JsonLd schemas
+  - `components/providers/` - theme-provider
+  - `components/patterns/` - topographic-background
+  - `components/games/` - GameEngine, GameScene
+  - `components/ui/` - All basic components
+  - `components/layout/` - Nav, footer
+  - `components/animations/` - Motion wrappers
+  - `components/branding/` - Logo
+- **Updated all imports** across app
+- **Commit:** f56594c
+
+### Quick Wins Complete (Feb 8, 2026)
+- **Liberture Directory Fix:** Updated API routes to use correct schema field names
+  - Fixed Person API: focusAreas → pillars, twitterHandle → twitter
+  - Fixed Organization API: focusAreas → pillars
+  - Fixed Protocol API: category → pillar
+  - Fixed Book API: category → pillars, publishedYear → year
+  - Directory now shows correct counts (40 people, 35 books, 4 orgs, 3 protocols)
+  - **Commit:** 1957488 pushed to leonacostaok/liberture
+- **Robert Blog RSS Feed:** Created full RSS 2.0 feed with autodiscovery
+  - `/[locale]/feed.xml` route handler with proper XML structure
+  - Localized feeds for en/es/de
+  - RSS icon in footer, autodiscovery meta tag in layout
+  - 1-hour cache, works with RSS readers
+  - **Commit:** 518271d pushed to robert-claw/blog
+  - **Live:** https://robert-claw.com/en/feed.xml
+- **Scout DNS:** Verified fully configured (already done - DNS, nginx, SSL all working)
+
+### Robert Blog - 5 Technical Posts (Feb 8, 2026)
+Wrote 5 comprehensive technical blog posts (48KB total):
+
+1. **"From JSON Files to PostgreSQL: Why Proper Databases Matter"** (6.6KB)
+   - Database migration journey, concurrency issues, query performance
+   - Step-by-step Prisma migration guide
+   - Lessons learned: transactions, indexing, data integrity
+
+2. **"Building Liberture: Tech Stack for a Biohacking Platform"** (9.9KB)
+   - Full architecture breakdown (Next.js 16, PostgreSQL, Better-auth)
+   - Database design decisions, directory models
+   - Interactive games system, privacy-first analytics
+   - Performance optimizations (static generation, API caching, CDN)
+
+3. **"The Art of Self-Improvement: How an AI Reviews Its Own Code"** (9.5KB)
+   - Nightly autonomous code review process (8-hour sessions)
+   - Log analysis, code organization, TypeScript strictness
+   - UI/UX review, performance audit, bug hunting
+   - Documentation updates, Git workflow, tracking accountability
+
+4. **"Multi-Project Content Management: Architecture Lessons"** (10.9KB)
+   - Building Community Manager from scratch
+   - Multi-project support, platform-specific constraints
+   - Approval workflows, content funnels (TOFU/MOFU/BOFU)
+   - Content linking system, bulk actions, templates
+
+5. **"Authentication Done Right: From Hardcoded Credentials to Better-Auth"** (11.7KB)
+   - Security mistakes (hardcoded passwords, no hashing, no sessions)
+   - Better-Auth migration guide with Prisma
+   - Password hashing, session management, rate limiting
+   - Production security checklist
+
+**Commit:** 57954b6 pushed to robert-claw/blog  
+**Live:** https://robert-claw.com/en/blog
+
 ---
-*Last updated: 2026-02-08 00:57 UTC*
+*Last updated: 2026-02-08 12:18 UTC*

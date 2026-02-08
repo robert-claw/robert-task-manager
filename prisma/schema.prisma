@@ -1,0 +1,185 @@
+// Community Manager Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          String   @id
+  name        String
+  slug        String   @unique
+  description String
+  icon        String?
+  color       String?
+  type        String   @default("business") // "business" | "personal"
+  platforms   String   // JSON array
+  marketingPlan String // JSON object
+  settings    String   // JSON object
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  content     Content[]
+  campaigns   Campaign[]
+  ideas       Idea[]
+  templates   Template[]
+  hashtags    Hashtag[]
+}
+
+model Content {
+  id           String   @id
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type         String   // "post" | "article" | "thread"
+  platform     String   // "linkedin" | "twitter" | "instagram" | "blog"
+  title        String
+  content      String   @db.Text
+  status       String   @default("draft") // "draft" | "ready_for_review" | "approved" | "scheduled" | "published" | "changes_requested"
+  priority     String   @default("medium") // "low" | "medium" | "high"
+  scheduledFor DateTime?
+  publishedAt  DateTime?
+  funnelStage  String?  // "TOFU" | "MOFU" | "BOFU"
+  mediaUrls    String?  // JSON array
+  linkedContent String? // JSON array of content IDs
+  engagement   String?  // JSON object { likes, comments, shares }
+  createdBy    String
+  assignee     String?
+  comments     String   @default("[]") // JSON array
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([projectId])
+  @@index([status])
+  @@index([platform])
+  @@index([scheduledFor])
+}
+
+model Campaign {
+  id          String   @id
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  status      String   @default("planning") // "planning" | "active" | "paused" | "completed"
+  startDate   DateTime?
+  endDate     DateTime?
+  goals       String   // JSON array
+  metrics     String?  // JSON object
+  contentIds  String   @default("[]") // JSON array of content IDs
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([projectId])
+  @@index([status])
+}
+
+model Idea {
+  id          String   @id
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String   @db.Text
+  platform    String?
+  status      String   @default("backlog") // "backlog" | "in-progress" | "converted" | "discarded"
+  priority    String   @default("medium")
+  tags        String   @default("[]") // JSON array
+  votes       Int      @default(0)
+  convertedToContentId String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([projectId])
+  @@index([status])
+}
+
+model Template {
+  id          String   @id
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  platform    String
+  funnelStage String?  // "TOFU" | "MOFU" | "BOFU"
+  structure   String   @db.Text
+  placeholders String  @default("[]") // JSON array
+  useCount    Int      @default(0)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([projectId])
+  @@index([platform])
+}
+
+model Hashtag {
+  id          String   @id
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag         String
+  category    String?
+  platform    String
+  useCount    Int      @default(0)
+  performance String?  // JSON object { impressions, engagement }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([projectId])
+  @@index([platform])
+  @@unique([projectId, tag, platform])
+}
+
+model Activity {
+  id          String   @id
+  type        String   // "content_created" | "content_published" | "campaign_started" | etc
+  description String
+  userId      String
+  metadata    String?  // JSON object
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id          String   @id
+  userId      String
+  title       String
+  message     String
+  type        String   // "info" | "success" | "warning" | "error"
+  read        Boolean  @default(false)
+  actionUrl   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([read])
+}
+
+model Analytics {
+  id          String   @id
+  projectId   String?
+  platform    String
+  metric      String   // "followers" | "engagement_rate" | "reach" | etc
+  value       Float
+  period      String   // "daily" | "weekly" | "monthly"
+  date        DateTime
+  metadata    String?  // JSON object
+  createdAt   DateTime @default(now())
+  
+  @@index([projectId])
+  @@index([platform])
+  @@index([date])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("user") // "admin" | "user" | "readonly"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

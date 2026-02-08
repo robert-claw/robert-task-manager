@@ -1,67 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { loadCampaigns, createCampaign, getCampaignsByProject, getCampaignsByStatus } from '@/lib/campaigns'
-import { CampaignStatus } from '@/lib/types'
+import { prisma } from '@/lib/prisma'
 
-// GET /api/campaigns - List campaigns with optional filters
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const projectId = searchParams.get('projectId')
-    const status = searchParams.get('status')
     
-    let campaigns = loadCampaigns()
+    const where: any = {}
+    if (projectId) where.projectId = projectId
     
-    if (projectId) {
-      campaigns = campaigns.filter(c => c.projectId === projectId)
-    }
-    if (status) {
-      campaigns = campaigns.filter(c => c.status === status)
-    }
+    const campaigns = await prisma.campaign.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          }
+        }
+      }
+    })
     
-    // Sort by startDate descending
-    campaigns.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+    const campaignsWithParsedFields = campaigns.map(campaign => ({
+      ...campaign,
+      goals: JSON.parse(campaign.goals),
+      metrics: campaign.metrics ? JSON.parse(campaign.metrics) : null,
+      contentIds: JSON.parse(campaign.contentIds),
+    }))
     
-    return NextResponse.json({ campaigns })
+    return NextResponse.json({ campaigns: campaignsWithParsedFields })
   } catch (error) {
     console.error('Failed to get campaigns:', error)
-    return NextResponse.json(
-      { error: 'Failed to load campaigns' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to load campaigns' }, { status: 500 })
   }
 }
 
-// POST /api/campaigns - Create new campaign
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
     
-    if (!data.projectId || !data.name) {
-      return NextResponse.json(
-        { error: 'Missing required fields: projectId, name' },
-        { status: 400 }
-      )
-    }
-
-    const campaign = createCampaign({
-      projectId: data.projectId,
-      name: data.name,
-      description: data.description || '',
-      status: (data.status as CampaignStatus) || 'planned',
-      color: data.color || '#6366f1',
-      startDate: data.startDate || new Date().toISOString().split('T')[0],
-      endDate: data.endDate || null,
-      goals: data.goals || [],
-      contentIds: data.contentIds || [],
-      tags: data.tags || [],
+    const campaign = await prisma.campaign.create({
+      data: {
+        id: Date.now().toString(),
+        projectId: data.projectId,
+        name: data.name,
+        description: data.description || null,
+        status: data.status || 'planning',
+        startDate: data.startDate ? new Date(data.startDate) : null,
+        endDate: data.endDate ? new Date(data.endDate) : null,
+        goals: JSON.stringify(data.goals || []),
+        metrics: data.metrics ? JSON.stringify(data.metrics) : null,
+        contentIds: JSON.stringify(data.contentIds || []),
+      },
     })
 
-    return NextResponse.json({ campaign }, { status: 201 })
+    return NextResponse.json({
+      campaign: {
+        ...campaign,
+        goals: JSON.parse(campaign.goals),
+        metrics: campaign.metrics ? JSON.parse(campaign.metrics) : null,
+        contentIds: JSON.parse(campaign.contentIds),
+      }
+    }, { status: 201 })
   } catch (error) {
     console.error('Failed to create campaign:', error)
-    return NextResponse.json(
-      { error: 'Failed to create campaign' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create campaign' }, { status: 500 })
   }
 }
