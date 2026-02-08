@@ -9,6 +9,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { NewContentModal, ContentFormData } from '@/components/features/content/NewContentModal'
 import { ContentDetailModal } from '@/components/features/content/ContentDetailModal'
 import { ContentActions } from '@/components/features/content/ContentActions'
+import { BulkActions } from '@/components/BulkActions'
 import {
   PlatformIcon,
   Plus,
@@ -822,6 +823,13 @@ function ContentPageContent() {
             </div>
           )}
         </motion.div>
+
+        {/* Bulk Actions */}
+        <BulkActions
+          selectedIds={selectedIds}
+          onClearSelection={() => setSelectedIds([])}
+          onActionComplete={fetchData}
+        />
       </main>
 
       {/* New Content Modal */}
@@ -925,3 +933,4 @@ export default function ContentPage() {
     </ToastProvider>
   )
 }
+
