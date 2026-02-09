@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-server'
+import { buildIdeaFilters } from '@/lib/filters'
 
 export async function GET(request: NextRequest) {
   try {
     await requireAuth()
     
     const searchParams = request.nextUrl.searchParams
-    const projectId = searchParams.get('projectId')
-    const status = searchParams.get('status')
     
-    const where: any = {}
-    if (projectId) where.projectId = projectId
-    if (status) where.status = status
+    const where = buildIdeaFilters({
+      projectId: searchParams.get('projectId') || undefined,
+      status: searchParams.get('status') || undefined,
+    })
     
     const ideas = await prisma.idea.findMany({
       where,

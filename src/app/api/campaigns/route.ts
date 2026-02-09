@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-server'
+import { buildCampaignFilters } from '@/lib/filters'
 
 export async function GET(request: NextRequest) {
   try {
     await requireAuth()
     
     const searchParams = request.nextUrl.searchParams
-    const projectId = searchParams.get('projectId')
     
-    const where: any = {}
-    if (projectId) where.projectId = projectId
+    const where = buildCampaignFilters({
+      projectId: searchParams.get('projectId') || undefined,
+      status: searchParams.get('status') || undefined,
+    })
     
     const campaigns = await prisma.campaign.findMany({
       where,

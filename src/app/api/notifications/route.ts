@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-server'
+import { buildNotificationFilters } from '@/lib/filters'
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,8 +11,10 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId') || 'leon' // Default user
     const unread = searchParams.get('unread') === 'true'
     
-    const where: any = { userId }
-    if (unread) where.read = false
+    const where = buildNotificationFilters({
+      userId,
+      read: unread ? false : undefined,
+    })
     
     const notifications = await prisma.notification.findMany({
       where,
