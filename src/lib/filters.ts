@@ -44,7 +44,6 @@ export function buildCampaignFilters(params: CampaignFilterParams): Prisma.Campa
   
   if (params.projectId) where.projectId = params.projectId
   if (params.status) where.status = params.status
-  if (params.createdBy) where.createdBy = params.createdBy
   
   return where
 }
@@ -53,7 +52,6 @@ export function buildCampaignFilters(params: CampaignFilterParams): Prisma.Campa
 export interface IdeaFilterParams {
   projectId?: string
   status?: string
-  category?: string
   createdBy?: string
 }
 
@@ -62,7 +60,6 @@ export function buildIdeaFilters(params: IdeaFilterParams): Prisma.IdeaWhereInpu
   
   if (params.projectId) where.projectId = params.projectId
   if (params.status) where.status = params.status
-  if (params.category) where.category = params.category
   if (params.createdBy) where.createdBy = params.createdBy
   
   return where
@@ -73,7 +70,6 @@ export interface TemplateFilterParams {
   projectId?: string
   platform?: string
   funnelStage?: string
-  category?: string
 }
 
 export function buildTemplateFilters(params: TemplateFilterParams): Prisma.TemplateWhereInput {
@@ -82,7 +78,6 @@ export function buildTemplateFilters(params: TemplateFilterParams): Prisma.Templ
   if (params.projectId) where.projectId = params.projectId
   if (params.platform) where.platform = params.platform
   if (params.funnelStage) where.funnelStage = params.funnelStage
-  if (params.category) where.category = params.category
   
   return where
 }
