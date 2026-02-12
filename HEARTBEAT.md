@@ -174,3 +174,33 @@ const prisma = new PrismaClient();
 - Free resources only (royalty-free, public domain)
 
 Track in heartbeat-state.json under "lastLibertureContent"
+
+## 9. Liberture SEO Health Check (1x daily)
+
+Run automated SEO health check for Liberture:
+
+```bash
+cd /root/liberture && npx tsx scripts/seo/seo-health-check.ts
+```
+
+**What it checks:**
+- Sitemap accessible and up to date
+- Robots.txt configured correctly
+- All articles have unique titles/descriptions
+- Content quality (tags, read times)
+- Internal linking opportunities
+
+**If errors found:**
+- Fix immediately before deployment
+- Check docs/SEO-CHECKLIST.md for guidance
+
+**After major content updates:**
+```bash
+# Inject internal links into new articles
+cd /root/liberture && npx tsx scripts/seo/inject-internal-links.ts
+
+# Ping search engines
+cd /root/liberture && npx tsx scripts/seo/ping-search-engines.ts
+```
+
+Track in heartbeat-state.json under "lastSEOCheck"

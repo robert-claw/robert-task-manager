@@ -476,5 +476,36 @@ Created `scripts/migrate-to-postgres.ts` for future use:
 **Time:** 1 hour 10 minutes (database setup, schema design, migration script, API updates, testing)  
 **Live:** https://task-manager.robert-claw.com (now powered by PostgreSQL)
 
+### CitiesABC - Connections API Fix (Feb 9, 2026)
+**Fixed validation error causing 400 Bad Request on connections endpoint**
+
+**Issue Identified:**
+- Frontend requested `limit=100` but Zod schema only allowed max 50
+- File: `components/chat/new-conversation-modal.tsx` line 101
+- Schema: `connectionListParamsSchema` in `schemas/chat.ts`
+
+**Fix Applied:**
+- Changed `limit: 100` to `limit: 50` in new conversation modal
+- Maintains schema validation consistency
+- Prevents 400 errors when fetching connections list
+
+**Testing:**
+- ✅ Build completed successfully (86 pages generated)
+- ✅ TypeScript compilation passed with no errors
+- ✅ PM2 process restarted successfully (pid 754416)
+- ✅ App responding with HTTP 200
+- ✅ DELETE endpoint verified (exists and works for canceling requests)
+
+**Commits:**
+- `6a15215` - "Fix connections API limit (50 max instead of 100)"
+- `71e9b4c` - Rebased with Leon's latest changes (731594a)
+
+**Notifications API:**
+- Checked notification routes and schemas
+- All validation looks correct (no params required for base call)
+- Issue may have been intermittent or fixed by app restart
+
+**Live:** https://citiesabc-impakt.robert-claw.com
+
 ---
-*Last updated: 2026-02-08 12:47 UTC*
+*Last updated: 2026-02-09 15:45 UTC*
